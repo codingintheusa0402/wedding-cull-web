@@ -67,8 +67,9 @@
   const KO = {
     privacyTitle: "모든 사진은 이 컴퓨터에서 분석돼요. 아무것도 업로드하지 않아요.",
     ptxt: "사진은 내 컴퓨터에만",
-    eyebrow: "무료 · 오픈소스 · Mac과 Windows",
+    eyebrow: "무료 · 오픈소스 · Mac · Chrome / Safari",
     h1: "사진 2,000장 셀렉,<br>저녁 내내가 아니라 몇 분이면.",
+    tagline: "웨딩 · 스냅 · 스튜디오 작가를 위한 무료 셀렉 도구",
     lede: "흔들리거나 초점이 나간 사진, 눈 감은 사진, 너무 어둡거나 밝은 사진, 렌즈 캡 실수 컷처럼 정리할 만한 컷을 Wedding Cull이 골라 줘요. 연사마다 가장 좋은 컷도 골라 줍니다. 몇 분 만에 확인하고 <b>Lightroom Classic</b>, <b>Adobe Bridge</b>, <b>Photoshop</b>에서 바로 이어서 작업하세요.",
     pick: "행사 폴더 선택",
     dropHint: "또는 폴더를 여기로 끌어다 놓기 · JPEG와 RAW (ARW, CR3, CR2, NEF, DNG, RAF, ORF, RW2)",
@@ -76,7 +77,7 @@
     s1h: "폴더 선택", s1p: "SD 카드에서 바로, 또는 복사본으로. RAW는 내장 미리보기로 읽어서 빨라요.",
     s2h: "표시된 사진만 확인", s2p: "제외·확인 사진만 이유별로 보여 주고, 연사마다 베스트 컷에 별을 달아요.",
     s3h: "편집 프로그램에서 열기", s3p: "별점·라벨·키워드를 표준 XMP로 기록해서 Lightroom, Bridge, Photoshop이 그대로 읽어요.",
-    foot: '<a href="https://github.com/codingintheusa0402/wedding-cull-web">GitHub 오픈소스</a> · MIT 라이선스 · Mac·Windows의 Chrome이나 Edge는 폴더에 바로 저장하고, Safari·Firefox는 ZIP으로 내려받아요.',
+    foot: '<a href="https://github.com/codingintheusa0402/wedding-cull-web">GitHub 오픈소스</a> · MIT 라이선스 · Mac에서 테스트됨: Chrome은 폴더에 바로 저장하고, Safari는 ZIP으로 내려받아요. Firefox·Windows는 테스트 예정이에요.',
     progOf: ' / <span id="progM">0</span>장',
     progStats: '<span>경과 <b id="progElapsed">0:00</b></span><span>남은 시간 <b id="progLeft">-</b></span><span><b id="progRate">-</b> 장/초</span><span>동시 작업 <b id="progWorkers">-</b>개</span>',
     legend: '<span><i class="dot reject"></i>제외</span><span><i class="dot check"></i>확인</span><span><i class="dot ok"></i>남김</span>',
@@ -182,8 +183,8 @@
     sup.innerHTML = canWrite
       ? tr("Your browser can save ratings straight into the folder. Choosing a folder asks for permission; nothing is uploaded.",
         "이 브라우저는 별점을 폴더에 바로 저장할 수 있어요. 폴더를 고르면 권한을 물어보고, 아무것도 업로드하지 않아요.")
-      : tr("This browser can read folders but not write to them: you get the ratings as a ZIP of XMP sidecars, which Lightroom and Bridge read for RAW files. For JPEGs and one-click saving use <b>Chrome</b> or <b>Edge</b> (Mac and Windows).",
-        "이 브라우저는 폴더를 읽을 수만 있고 쓸 수는 없어요. 별점은 XMP 사이드카 ZIP으로 받게 되는데, Lightroom과 Bridge는 RAW 파일에서만 읽어요. JPEG와 원클릭 저장은 <b>Chrome</b>이나 <b>Edge</b>(Mac·Windows)를 쓰세요.");
+      : tr("This browser can read folders but not write to them: you get the ratings as a ZIP of XMP sidecars, which Lightroom and Bridge read for RAW files. For JPEGs and one-click saving use <b>Chrome</b>.",
+        "이 브라우저는 폴더를 읽을 수만 있고 쓸 수는 없어요. 별점은 XMP 사이드카 ZIP으로 받게 되는데, Lightroom과 Bridge는 RAW 파일에서만 읽어요. JPEG와 원클릭 저장은 <b>Chrome</b>을 쓰세요.");
     if (!canWrite) sup.classList.add("warn");
   }
   function initStart() {
@@ -565,8 +566,8 @@
   function appsHtml() {
     const lab = cfgNow().output.check_label;
     const saved = S.root ? tr("Click <b>Save to folder</b> (top right).", "오른쪽 위 <b>폴더에 저장</b>을 누르세요.")
-      : tr("Click <b>Download XMP (ZIP)</b> and unzip it into the event folder, next to the photos (RAW files only: for JPEGs open Wedding Cull in Chrome or Edge).",
-        "<b>XMP 내려받기 (ZIP)</b>를 누르고 행사 폴더의 사진 옆에 압축을 푸세요 (RAW만 해당: JPEG는 Chrome이나 Edge에서 Wedding Cull을 여세요).");
+      : tr("Click <b>Download XMP (ZIP)</b> and unzip it into the event folder, next to the photos (RAW files only: for JPEGs open Wedding Cull in Chrome).",
+        "<b>XMP 내려받기 (ZIP)</b>를 누르고 행사 폴더의 사진 옆에 압축을 푸세요 (RAW만 해당: JPEG는 Chrome에서 Wedding Cull을 여세요).");
     if (S.lang === "ko") return `<div class="sec"><h2>Lightroom, Bridge, Photoshop에서 열기</h2></div>
       <p class="hint">Wedding Cull은 표준 XMP 메타데이터를 기록해요: 제외 사진은 <b>Reject</b>(별점 −1), 확인할 사진은 노란 라벨 “${esc(lab)}”, 연사의 베스트 컷과 좋은 단독 컷은 ★★★, 그리고 <code>Culling|Blur / camera shake</code> 같은 키워드. ${S.root ? "JPEG는 파일 안에(사진 데이터는 그대로), RAW는 옆에 .xmp 사이드카로." : ".xmp 사이드카로."} 메뉴 이름은 영문 기준이에요.</p>
       <div class="apps">
@@ -887,7 +888,7 @@
 `Wedding Cull results for ${S.rootName}
 Unzip into the event folder so each .xmp sits next to its photo.
 Lightroom Classic and Adobe Bridge read these .xmp files for RAW photos (Lightroom: Metadata > Read Metadata from Files).
-For JPEGs they read ratings only from inside the file: open Wedding Cull in Chrome or Edge and use "Save to folder".
+For JPEGs they read ratings only from inside the file: open Wedding Cull in Chrome and use "Save to folder".
 Photoshop: File > Scripts > Browse... > _cull/Open keepers in Photoshop.jsx
 ` });
     download(WC.zip(files), `${S.rootName} - Wedding Cull XMP.zip`);

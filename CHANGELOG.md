@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.2 - 2026-11-15
+
+- Only what is tested is promised: **Mac · Chrome / Safari**. Firefox and Windows are marked "testing soon"
+  (테스트 예정) on the site and in the README; the hints now say "use Chrome" instead of "Chrome or Edge (Mac and
+  Windows)".
+- Subline under the headline: "Free culling for wedding, snap and studio photographers" /
+  "웨딩 · 스냅 · 스튜디오 작가를 위한 무료 셀렉 도구".
+- README: Roadmap section (Firefox/Windows testing; obstruction check with on-device person detection, not ported
+  from the desktop because it is unreliable).
+- tests/flow.cjs: the "kept by hand" line names the photo it actually kept (the first card on the Rejects page).
+
 ## 0.2.1 - 2026-11-15
 
 - **Not just weddings**: the headline now says "Cull 2,000 photos in minutes, not evenings" /

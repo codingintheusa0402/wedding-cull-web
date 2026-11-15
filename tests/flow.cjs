@@ -70,9 +70,11 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   }
 
   // a decision, then save through the real code path
-  const firstReject = await page.evaluate(() => (WCApp.S.results.find((r) => r.status === "reject") || {}).name);
-  if (firstReject) {
+  // keep the first card on the Rejects page (grouped by reason, so not necessarily the first reject in file order)
+  let firstReject = null;
+  if (await page.evaluate(() => WCApp.S.results.some((r) => r.status === "reject"))) {
     await page.click('.side a[data-v="reject"]'); await sleep(200);
+    firstReject = await page.$eval("#content .card", (c) => { const id = c.dataset.id; return WCApp.S.results.find((r) => String(r.id) === id).name; });
     await page.focus("#content .card"); await page.keyboard.press("k"); await sleep(200);
   }
   await page.click("#saveBtn");

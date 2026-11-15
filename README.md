@@ -4,14 +4,15 @@
 
 # Wedding Cull
 
-**Free photo culling for wedding photographers, right in your browser.**<br>
+**Free photo culling for wedding, snap and studio photographers, right in your browser.**<br>
+웨딩 · 스냅 · 스튜디오 작가를 위한 무료 셀렉 도구<br>
 Flags blur, missed focus, closed eyes and bad exposure, picks the best frame of every burst,
 and hands the result to **Lightroom Classic**, **Adobe Bridge** and **Photoshop**.<br>
 Your photos never leave your computer.
 
 ### [**▶ Open Wedding Cull**](https://codingintheusa0402.github.io/wedding-cull-web/)
 
-Mac and Windows · Chrome / Edge (Safari and Firefox: read-only mode) · English and 한국어 · nothing to install · MIT
+Mac · Chrome / Safari (Firefox and Windows: testing soon, 테스트 예정) · English and 한국어 · nothing to install · MIT
 
 <img src="docs/media/demo.gif" alt="Choosing a wedding folder, 45 photos analysed in about 12 seconds, rejects grouped by reason, bursts with the best frame starred, the full-size view, and saving ratings into the folder" width="100%">
 
@@ -59,7 +60,7 @@ Each photo says why in plain words ("Camera shake: the picture is smeared"); tic
 
 ## How to use it
 
-1. Open **[Wedding Cull](https://codingintheusa0402.github.io/wedding-cull-web/)** in **Chrome** or **Edge** (Mac or Windows).
+1. Open **[Wedding Cull](https://codingintheusa0402.github.io/wedding-cull-web/)** in **Chrome** on a Mac (Safari works too, without saving into the folder: see [Browsers](#browsers)).
 2. Pick **Lightroom Classic** or **Bridge + Photoshop** under *I edit in*, a strictness (*Normal* is a good start) and how many of the best frames to keep per burst (*1* by default). The **한국어 / English** button at the top right switches the language.
 3. Click **Choose event folder** (straight from the SD card is fine) and allow access. JPEG and RAW (ARW, CR3, CR2, NEF, DNG, RAF, ORF, RW2).
 4. Look through **Rejects** and **To check**. Fix any wrong call with K / R / C.
@@ -112,10 +113,13 @@ so they are about as fast. A second visit to the same folder reuses the results.
 
 | | Analyse + review | Save to folder | Without saving |
 |---|---|---|---|
-| **Chrome, Edge** (Mac, Windows) | ✅ | ✅ | |
-| **Safari**, **Firefox** | ✅ | — | **Download XMP (ZIP)**: unzip into the event folder. Works for **RAW**; for JPEG shoots use Chrome or Edge (Lightroom and Bridge read JPEG ratings only from inside the file) |
+| **Chrome** (Mac) | ✅ tested | ✅ tested | |
+| **Safari** (Mac) | ✅ tested | — | **Download XMP (ZIP)**: unzip into the event folder. Works for **RAW**; for JPEG shoots use Chrome (Lightroom and Bridge read JPEG ratings only from inside the file) |
+| **Firefox**, **Windows** (Chrome / Edge) | testing soon (테스트 예정) | | |
 
-Tested on macOS: Chrome (full flow, including saving), Safari's WebKit engine (analysis and review). Firefox and Windows use the same code but have not been tested yet.
+Tested on macOS: Chrome (full flow, including saving into the folder) and Safari's WebKit engine (analysis and review).
+Firefox and Windows run the same code, and Edge has the same folder access as Chrome, but none of them has been tested
+yet, so they are not promised.
 
 ## How it works
 
@@ -157,6 +161,13 @@ Tests (Node 20+ and [Playwright](https://playwright.dev)'s `playwright-core`) ar
 The photos in the demo and screenshots are by **[owol.snap](https://www.instagram.com/owol.snap/)** and are shown with the couples'
 permission. They are **not** covered by the MIT license and may not be reused. Files named `*_sim-blur`, `*_sim-shake`,
 `*_sim-dark`, `*_sim-bright` and `*_sim-lenscap` are simulated defects made from those photos to show what Wedding Cull catches.
+
+## Roadmap
+
+- **Firefox and Windows**: test and then list them as supported.
+- **Something in front of the lens** (a guest's head or shoulder blocking the frame): planned with on-device person
+  detection. The desktop app's current check misses too many and flags too many good photos, so it is not in the web
+  version.
 
 ## License
 
