@@ -1,0 +1,27 @@
+.DS_Store
+node_modules/
+# never commit client photos or test shoots
+*.ARW
+*.arw
+*.CR3
+*.cr3
+*.CR2
+*.cr2
+*.NEF
+*.nef
+*.DNG
+*.dng
+*.RAF
+*.raf
+*.ORF
+*.orf
+*.RW2
+*.rw2
+*.jpg
+*.JPG
+*.jpeg
+*.JPEG
+*.xmp
+_cull/
+# ...except the README media (consented demo photos)
+!docs/media/*.jpg
