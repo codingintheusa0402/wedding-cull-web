@@ -13,6 +13,9 @@
 - **New icon**: stacked frames resolving to one gold pick. PNG favicon, Apple touch icon and a web app manifest
   (installable from Chrome / Edge).
 - README media re-recorded.
+- Fixes: toolbar labels no longer break mid-word on narrow screens (the bar scrolls sideways); the overview's last
+  tile now shows **Kept** (same number as the sidebar) instead of "keepers" (which also counted photos to check);
+  the Korean kicker is not upper-cased ("MAC과").
 
 ## 0.1.0 - 2026-11-15
 

@@ -198,3 +198,8 @@ html:lang(ko) h1 { letter-spacing: -1px; }
 .side .details { display: flex; gap: 8px; align-items: center; margin: 18px 8px 4px; font-size: 13px; color: var(--muted); cursor: pointer; }
 .keepctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 10px; font-size: 14px; color: var(--muted); }
 .keepSeg button { padding: 6px 11px; font-variant-numeric: tabular-nums; }
+/* never break a toolbar label mid-word; narrow screens scroll the bar sideways instead */
+.seg button, .bar-mid .btn, .bar-mid .linkbtn { white-space: nowrap; flex-shrink: 0; }
+.bar-mid .seg, .bar-mid .topctl { flex-shrink: 0; }
+html:lang(ko) .eyebrow { text-transform: none; letter-spacing: .02em; }
+.tile.ok b { color: var(--ok); }

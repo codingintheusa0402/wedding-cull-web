@@ -516,7 +516,7 @@
         <div class="tile reject"><b>${nRej.toLocaleString()}</b><span>${tr("rejects", "제외")}</span></div>
         <div class="tile check"><b>${nChk.toLocaleString()}</b><span>${tr("to check", "확인 필요")}</span></div>
         <div class="tile best"><b>${g.bursts.size.toLocaleString()}</b><span>${tr(`bursts · ${alt.toLocaleString()} alternates`, `연사 · 다른 컷 ${alt.toLocaleString()}장`)}</span></div>
-        <div class="tile"><b>${(S.results.length - nRej).toLocaleString()}</b><span>${tr("keepers", "남길 사진")}</span></div>
+        <div class="tile ok"><b>${g.kept.length.toLocaleString()}</b><span>${tr("kept", "남김")}</span></div>
       </div>`;
     if (S.faceError) h += `<p class="hint">⚠️ ${tr(`Face and closed-eye checks are off in this browser (no WebGL): ${esc(S.faceError)}. Blur, exposure and bursts still work.`, `이 브라우저에서는 얼굴·눈 감음 검사가 꺼져 있어요 (WebGL 없음): ${esc(S.faceError)}. 흔들림, 밝기, 연사는 그대로 돼요.`)}</p>`;
     const rows = WC.CHECKS.map((k) => `<tr><td><i class="dot reject"></i>${esc(label(k))}</td><td>${(g.reject.get(k) || []).length}</td><td>${(g.check.get(k) || []).length}</td></tr>`).join("");
