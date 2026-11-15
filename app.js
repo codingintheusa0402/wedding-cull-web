@@ -68,7 +68,7 @@
     privacyTitle: "모든 사진은 이 컴퓨터에서 분석돼요. 아무것도 업로드하지 않아요.",
     ptxt: "사진은 내 컴퓨터에만",
     eyebrow: "무료 · 오픈소스 · Mac과 Windows",
-    h1: "2,000장 웨딩 셀렉,<br>저녁 내내가 아니라 몇 분이면.",
+    h1: "사진 2,000장 셀렉,<br>저녁 내내가 아니라 몇 분이면.",
     lede: "흔들리거나 초점이 나간 사진, 눈 감은 사진, 너무 어둡거나 밝은 사진, 렌즈 캡 실수 컷처럼 정리할 만한 컷을 Wedding Cull이 골라 줘요. 연사마다 가장 좋은 컷도 골라 줍니다. 몇 분 만에 확인하고 <b>Lightroom Classic</b>, <b>Adobe Bridge</b>, <b>Photoshop</b>에서 바로 이어서 작업하세요.",
     pick: "행사 폴더 선택",
     dropHint: "또는 폴더를 여기로 끌어다 놓기 · JPEG와 RAW (ARW, CR3, CR2, NEF, DNG, RAF, ORF, RW2)",

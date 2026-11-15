@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1 - 2026-11-15
+
+- **Not just weddings**: the headline now says "Cull 2,000 photos in minutes, not evenings" /
+  "사진 2,000장 셀렉, 저녁 내내가 아니라 몇 분이면". The app name stays Wedding Cull.
+- **New icon**: white focus brackets and a focus dot on an orange-to-pink gradient (clearer at small sizes than
+  0.2.0's stacked frames). Favicon, Apple touch icon, PWA icons, README and the social preview updated.
+- README media re-recorded with the new headline and icon.
+
 ## 0.2.0 - 2026-11-15
 
 - **Korean** (한국어): every screen, button, message and the Save dialog. Follows the browser language, a
