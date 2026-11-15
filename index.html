@@ -1,11 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Wedding Cull</title>
-<meta name="description" content="Free photo culling for wedding photographers. Flags blur, missed focus, closed eyes, bad exposure and picks the best frame of every burst. Runs in your browser: photos never leave your computer.">
-<meta name="color-scheme" content="light dark">
+<meta name="description" content="Free photo culling for wedding, snap and studio photographers. Flags blur, missed focus, closed eyes, bad exposure and picks the best frame of every burst. Runs in your browser: photos never leave your computer.">
 <meta property="og:title" content="Wedding Cull: free photo culling in your browser">
 <meta property="og:description" content="Flags blur, missed focus, closed eyes and bad exposure, picks the best frame of every burst, and writes ratings for Lightroom, Bridge and Photoshop. Photos never leave your computer.">
 <meta property="og:image" content="https://codingintheusa0402.github.io/wedding-cull-web/docs/media/social.jpg">
@@ -15,82 +14,131 @@
 <link rel="icon" href="assets/icon-32.png" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#14172d">
+<meta name="theme-color" content="#1c1c1f">
+<!-- dark by default (editing apps are dark); the choice is remembered. Set before paint, so no flash. -->
+<script>(function () { var t = "dark"; try { var v = JSON.parse(localStorage.getItem("wc.theme")); if (v === "light" || v === "dark") t = v; } catch (e) {}
+  var q = /[?&]theme=(light|dark)/.exec(location.search); if (q) t = q[1]; document.documentElement.dataset.theme = t; })();</script>
+<link rel="stylesheet" href="assets/fonts/pretendard/pretendard.css">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-overview" viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.6"/></symbol>
+  <symbol id="i-reject" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M6 18 18 6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6.3"/><path d="m15.5 15.5 5 5"/></symbol>
+  <symbol id="i-keep" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m8 12.4 2.8 2.8 5.4-5.6"/></symbol>
+  <symbol id="i-best" viewBox="0 0 24 24"><path d="m12 3.8 2.5 5.1 5.6.8-4 3.9.9 5.6-5-2.6-5 2.6.9-5.6-4-3.9 5.6-.8z"/></symbol>
+  <symbol id="i-burst" viewBox="0 0 24 24"><rect x="7.5" y="7.5" width="13" height="11" rx="2"/><path d="M4 15V6.5a2 2 0 0 1 2-2h10"/></symbol>
+  <symbol id="i-accidental" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.3"/><path d="M12 3.5v4.2"/></symbol>
+  <symbol id="i-blur" viewBox="0 0 24 24"><path d="M3.5 9c2-2.2 4 2.2 6 0s4-2.2 6 0 3.5 1.2 5 0"/><path d="M3.5 15c2-2.2 4 2.2 6 0s4-2.2 6 0 3.5 1.2 5 0"/></symbol>
+  <symbol id="i-missed_focus" viewBox="0 0 24 24"><path d="M4 8.5V4h4.5M15.5 4H20v4.5M20 15.5V20h-4.5M8.5 20H4v-4.5"/><circle cx="15" cy="9" r="2.3"/></symbol>
+  <symbol id="i-eyes" viewBox="0 0 24 24"><path d="M3.5 10.5c2.5 3.6 5.5 5.2 8.5 5.2s6-1.6 8.5-5.2"/><path d="m7 15-1.5 2.2M12 15.9v2.7M17 15l1.5 2.2"/></symbol>
+  <symbol id="i-dark" viewBox="0 0 24 24"><path d="M19.6 14.6A8 8 0 1 1 9.4 4.4a6.4 6.4 0 0 0 10.2 10.2z"/></symbol>
+  <symbol id="i-bright" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.8"/><path d="M12 2.8v2.1M12 19.1v2.1M2.8 12h2.1M19.1 12h2.1M5.5 5.5 7 7M17 17l1.5 1.5M5.5 18.5 7 17M17 7l1.5-1.5"/></symbol>
+  <symbol id="i-apps" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-8.5 8.5"/><path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M12 11v5M9.6 13.4 12 11l2.4 2.4"/></symbol>
+  <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.6a2.5 2.5 0 1 1 3.4 2.3c-.6.3-1 .8-1 1.5v.3"/><path d="M12 16.6v.3"/></symbol>
+  <symbol id="i-error" viewBox="0 0 24 24"><path d="M12 4.2 20.8 19.5H3.2z"/><path d="M12 10v4.2M12 16.8v.2"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M5 5.5h14A1.5 1.5 0 0 1 20.5 7v8a1.5 1.5 0 0 1-1.5 1.5h-8.5l-4.5 3.5v-3.5H5A1.5 1.5 0 0 1 3.5 15V7A1.5 1.5 0 0 1 5 5.5z"/></symbol>
+  <symbol id="i-ig" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4.6"/><circle cx="12" cy="12" r="3.8"/><path d="M16.9 7.1v.1"/></symbol>
+  <symbol id="i-form" viewBox="0 0 24 24"><rect x="5" y="3.8" width="14" height="16.8" rx="2"/><path d="M8.8 9h6.4M8.8 12.8h6.4M8.8 16.6h3.4"/></symbol>
+  <symbol id="i-bug" viewBox="0 0 24 24"><rect x="8" y="7" width="8" height="12.5" rx="4"/><path d="M12 10v9.5M8 11.5H4.5M16 11.5h3.5M8 15.5H5M16 15.5h3M9.6 7 8.2 4.6M14.4 7l1.4-2.4"/></symbol>
+  <symbol id="i-code" viewBox="0 0 24 24"><path d="m8.5 7.5-4.5 4.5 4.5 4.5M15.5 7.5l4.5 4.5-4.5 4.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><path d="m14.5 5.5-6.5 6.5 6.5 6.5"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="m9.5 5.5 6.5 6.5-6.5 6.5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 5.8v5.4c0 4.4 3 8.3 7 9.8 4-1.5 7-5.4 7-9.8V5.8z"/><path d="m9 12.2 2.2 2.2 4-4.2"/></symbol>
+</svg>
+
 <header class="bar">
   <a class="brand" href="./" aria-label="Wedding Cull home">
-    <img src="assets/icon.svg" alt="" width="28" height="28"><span>Wedding Cull</span>
+    <img src="assets/icon.svg" alt="" width="26" height="26"><span>Wedding Cull</span>
   </a>
   <div class="bar-mid" id="barMid"></div>
   <div class="bar-right">
-    <button class="linkbtn lang" id="langBtn" lang="ko">한국어</button>
     <span class="privacy" data-i18n-title="privacyTitle" title="Every photo is analysed on this computer. Nothing is uploaded.">
-      <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Zm-1.2 14.2-3.5-3.5 1.4-1.4 2.1 2.1 4.6-4.6 1.4 1.4-6 6Z"/></svg>
+      <svg class="ic" aria-hidden="true"><use href="#i-shield"/></svg>
       <span class="ptxt" data-i18n="ptxt">Photos stay on your computer</span>
     </span>
+    <button class="iconbtn lang" id="langBtn" lang="ko">한국어</button>
+    <button class="iconbtn" id="themeBtn" aria-label="Light mode" title="Light mode"><svg class="ic"><use href="#i-bright"/></svg></button>
+    <button class="iconbtn" id="helpBtn" aria-label="Help and contact" title="Help and contact" aria-haspopup="true" aria-expanded="false"><svg class="ic"><use href="#i-help"/></svg></button>
   </div>
 </header>
+<div class="menu" id="helpMenu" role="menu" hidden></div>
 
 <!-- ============================================================ start -->
 <main id="start" class="screen">
   <section class="hero">
-    <p class="eyebrow" data-i18n="eyebrow">Free &amp; open source · Mac · Chrome / Safari</p>
-    <h1 data-i18n="h1">Cull 2,000 photos<br>in minutes, not evenings.</h1>
-    <p class="tagline" data-i18n="tagline">Free culling for wedding, snap and studio photographers</p>
-    <p class="lede" data-i18n="lede">Wedding Cull flags the frames you would delete: blur and camera shake, missed focus, closed eyes,
-      too dark or too bright, lens-cap misfires. It picks the best shot of every burst. You confirm in a few minutes,
-      then open the result in <b>Lightroom Classic</b>, <b>Adobe Bridge</b> or <b>Photoshop</b>.</p>
+    <div class="pitch">
+      <h1 data-i18n="h1">Cull 2,000 photos<br>in minutes,<br>not evenings.</h1>
+      <p class="tagline" data-i18n="tagline">Free culling for wedding, snap and studio photographers</p>
+      <ul class="benefits">
+        <li><svg class="ic"><use href="#i-blur"/></svg><span data-i18n="b1">Flags camera shake, missed focus, closed eyes and bad exposure</span></li>
+        <li><svg class="ic"><use href="#i-best"/></svg><span data-i18n="b2">Stars the best frame of every burst</span></li>
+        <li><svg class="ic"><use href="#i-apps"/></svg><span data-i18n="b3">Opens straight in Lightroom Classic, Bridge and Photoshop</span></li>
+      </ul>
 
-    <div class="drop" id="drop" tabindex="0">
-      <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2Zm2 5 4 4h-3v4h-2v-4H8l4-4Z"/></svg>
-      <button class="btn primary big" id="pick" data-i18n="pick">Choose event folder</button>
-      <p data-i18n="dropHint">or drop the folder here · JPEG and RAW (ARW, CR3, CR2, NEF, DNG, RAF, ORF, RW2)</p>
+      <div class="drop" id="drop" tabindex="0">
+        <button class="btn primary big" id="pick"><svg class="ic"><use href="#i-folder"/></svg><span data-i18n="pick">Choose a folder</span></button>
+        <p class="drophint" data-i18n="dropHint">or drop it here. JPEG and RAW (ARW, CR3, CR2, NEF, DNG, RAF, ORF, RW2)</p>
+      </div>
+
+      <div class="opts">
+        <div class="opt"><span class="optl" data-i18n="optStrict">Strictness</span>
+          <span class="seg" id="strictStart" role="radiogroup">
+            <button data-v="gentle">Gentle</button><button data-v="normal" class="on">Normal</button><button data-v="strict">Strict</button>
+          </span>
+        </div>
+        <div class="opt"><span class="optl" data-i18n="optApp">I edit in</span>
+          <span class="seg" id="appStart" role="radiogroup">
+            <button data-v="lightroom" class="on">Lightroom Classic</button><button data-v="bridge">Bridge + Photoshop</button>
+          </span>
+        </div>
+        <div class="opt"><span class="optl" data-i18n="optKeep">Best per burst</span>
+          <span class="seg keepSeg" id="keepStart" role="radiogroup">
+            <button data-v="1" class="on">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button>
+          </span>
+        </div>
+        <label class="opt chk"><input type="checkbox" id="recursive"> <span data-i18n="optSub">Include subfolders</span></label>
+      </div>
+      <p class="support" id="support"></p>
     </div>
 
-    <div class="opts">
-      <label><span data-i18n="optStrict">Strictness</span>
-        <span class="seg" id="strictStart" role="radiogroup">
-          <button data-v="gentle">Gentle</button><button data-v="normal" class="on">Normal</button><button data-v="strict">Strict</button>
-        </span>
-      </label>
-      <label><span data-i18n="optApp">I edit in</span>
-        <span class="seg" id="appStart" role="radiogroup">
-          <button data-v="lightroom" class="on">Lightroom Classic</button><button data-v="bridge">Bridge + Photoshop</button>
-        </span>
-      </label>
-      <label><span data-i18n="optKeep">Best per burst</span>
-        <span class="seg keepSeg" id="keepStart" role="radiogroup">
-          <button data-v="1" class="on">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button>
-        </span>
-      </label>
-      <label class="chk"><input type="checkbox" id="recursive"> <span data-i18n="optSub">Include subfolders</span></label>
-    </div>
-    <p class="support" id="support"></p>
+    <figure class="demo">
+      <div class="frame">
+        <video src="docs/media/demo.mp4#t=6" poster="docs/media/05-bursts.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Wedding Cull analysing a folder and sorting the photos"></video>
+        <i class="br tl"></i><i class="br tr"></i><i class="br bl"></i><i class="br bri"></i>
+      </div>
+      <figcaption data-i18n="demoCap">Real speed: 45 full-size photos analysed in about 12 seconds, on this computer.</figcaption>
+    </figure>
   </section>
 
   <section class="how">
-    <div><b>1</b><h3 data-i18n="s1h">Choose the folder</h3><p data-i18n="s1p">Straight from the SD card or a copy. RAW files are read through their embedded preview, so it is fast.</p></div>
-    <div><b>2</b><h3 data-i18n="s2h">Check the flagged ones</h3><p data-i18n="s2p">Only rejects and "check" photos are shown, grouped by reason, each burst with its best frame starred.</p></div>
-    <div><b>3</b><h3 data-i18n="s3h">Open in your editor</h3><p data-i18n="s3p">Ratings, labels and keywords are written as standard XMP: Lightroom, Bridge and Photoshop read them.</p></div>
+    <ol>
+      <li><h3 data-i18n="s1h">Choose the folder</h3><p data-i18n="s1p">Straight from the SD card or a copy. RAW files are read through their embedded preview, so it is fast.</p></li>
+      <li><h3 data-i18n="s2h">Check the flagged ones</h3><p data-i18n="s2p">Only rejects and photos to check are shown, grouped by reason, with the best frame of every burst starred.</p></li>
+      <li><h3 data-i18n="s3h">Open in your editor</h3><p data-i18n="s3p">Ratings, labels and keywords are written as standard XMP. Lightroom, Bridge and Photoshop read them.</p></li>
+    </ol>
   </section>
-  <footer class="foot" data-i18n="foot">
-    <a href="https://github.com/codingintheusa0402/wedding-cull-web">Open source on GitHub</a> · MIT license ·
-    Tested on Mac: Chrome saves straight into the folder, Safari downloads a ZIP. Firefox and Windows: testing soon.
+  <footer class="foot">
+    <p data-i18n="foot"><a href="https://github.com/codingintheusa0402/wedding-cull-web">Open source on GitHub</a>, MIT license. Tested on Mac: Chrome saves straight into the folder, Safari downloads a ZIP. Firefox and Windows: testing soon.</p>
+    <button class="linkbtn contact" id="contactBtn" aria-haspopup="true"><svg class="ic"><use href="#i-msg"/></svg><span data-i18n="contact">Contact and bug reports</span></button>
   </footer>
 </main>
 
 <!-- ============================================================ progress -->
 <main id="progress" class="screen" hidden>
   <section class="prog">
-    <h2 id="progTitle">Analysing</h2>
-    <div class="count"><span id="progN">0</span><small data-i18n="progOf"> of <span id="progM">0</span> photos</small></div>
-    <div class="meter"><i id="progBar"></i></div>
-    <div class="stats" data-i18n="progStats"><span>Elapsed <b id="progElapsed">0:00</b></span><span>Left <b id="progLeft">-</b></span><span><b id="progRate">-</b> photos/s</span><span><b id="progWorkers">-</b> parallel workers</span></div>
-    <div class="legend" data-i18n="legend"><span><i class="dot reject"></i>reject</span><span><i class="dot check"></i>check</span><span><i class="dot ok"></i>keep</span></div>
+    <div class="prog-head">
+      <h2 id="progTitle">Analysing</h2>
+      <div class="count"><span id="progN">0</span><small data-i18n="progOf"> of <span id="progM">0</span> photos</small></div>
+      <div class="meter"><i id="progBar"></i></div>
+      <div class="stats" data-i18n="progStats"><span>Elapsed <b id="progElapsed">0:00</b></span><span>Left <b id="progLeft">-</b></span><span><b id="progRate">-</b> photos/s</span><span><b id="progWorkers">-</b> parallel workers</span></div>
+      <div class="lanes" data-i18n="legend"><span class="lane reject"><svg class="ic"><use href="#i-reject"/></svg>Reject <b id="laneR">0</b></span><span class="lane check"><svg class="ic"><use href="#i-check"/></svg>Check <b id="laneC">0</b></span><span class="lane ok"><svg class="ic"><use href="#i-keep"/></svg>Keep <b id="laneK">0</b></span></div>
+      <p class="muted note" id="progNote">Measuring sharpness, faces, eyes and exposure on this computer. Nothing is uploaded.</p>
+    </div>
     <div class="stream" id="stream"></div>
-    <p class="muted" id="progNote">Measuring sharpness, faces, eyes and exposure on this computer. Nothing is uploaded.</p>
   </section>
 </main>
 
@@ -102,14 +150,14 @@
 
 <!-- lightbox -->
 <div class="lb" id="lb" hidden>
-  <div class="lb-img"><img id="lbImg" alt=""><div class="lb-nav"><button id="lbPrev" aria-label="Previous">‹</button><button id="lbNext" aria-label="Next">›</button></div></div>
+  <div class="lb-img"><img id="lbImg" alt=""><div class="lb-nav"><button id="lbPrev" aria-label="Previous"><svg class="ic"><use href="#i-prev"/></svg></button><button id="lbNext" aria-label="Next"><svg class="ic"><use href="#i-next"/></svg></button></div></div>
   <div class="lb-side" id="lbSide"></div>
-  <button class="lb-close" id="lbClose" aria-label="Close (Esc)">×</button>
+  <button class="lb-close" id="lbClose" aria-label="Close (Esc)"><svg class="ic"><use href="#i-x"/></svg></button>
 </div>
 
 <!-- modal -->
-<div class="modal" id="modal" hidden><div class="modal-box" id="modalBox"></div></div>
-<div class="toast" id="toast" hidden></div>
+<div class="modal" id="modal" hidden><div class="modal-box" id="modalBox" role="dialog" aria-modal="true"></div></div>
+<div class="toast" id="toast" hidden role="status"></div>
 
 <script src="engine/core.js"></script>
 <script src="engine/files.js"></script>

@@ -8,7 +8,7 @@ Chromium has no GPU, so the browser tests start it with SwiftShader (software We
 |---|---|
 | `node tests/parity.cjs DIR` | On the same decoded pixels and face boxes, the web engine computes the same features and verdicts as the desktop Python engine. `DIR` holds `index.json` + raw RGB dumps made from a desktop run (see below). |
 | `node tests/e2e.cjs URL FOLDER [OUT]` | The whole analysis in a real browser (workers, OpenCV.js, YuNet, MediaPipe) on a folder; scores against `truth.csv` if present and writes `web_results.json`. |
-| `node tests/flow.cjs URL FOLDER OUT [--shots] [--dark]` | The full flow through the real File System Access code (the folder lives in the browser's private file system): analyse, decide, **Save to folder**, read the written files back. `--shots` captures the README screenshots. |
+| `node tests/flow.cjs URL FOLDER OUT [--shots] [--dark]` | The full flow through the real File System Access code (the folder lives in the browser's private file system): analyse, decide, **Save to folder**, read the written files back. `--shots` captures the README screenshots; `--dark` uses the dark theme (the app's default), without it the light theme. |
 | `node tests/xmp.cjs URL JPEG OUT` | XMP inside a JPEG: first write, then a merge into a packet that already has Camera Raw settings and a user keyword. Check the output with `exiftool` and compare pixels. |
 
 Making a parity set from the desktop tool (`wedding-cull`, Python): run `cull FOLDER --no-xmp`, then dump each photo's

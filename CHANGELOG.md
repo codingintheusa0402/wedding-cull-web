@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.3.0 - 2026-11-15
+
+A new look; every function, check, decision and file written is the same as 0.2.2 (parity, e2e, flow and XMP tests
+unchanged).
+
+- **Dark by default** like an editing app, with a light mode (sun / moon button, remembered). Graphite surfaces so the
+  photos carry the colour; the icon's orange-to-pink only on the main action, progress and the best of each burst.
+- **Focus brackets** (the icon's motif) mark the photo you are on, the best frame of a burst, and snap in, in the
+  decision's colour, when you mark a photo keep / reject / check.
+- **Type**: Pretendard (Korean and Latin) with Archivo for headlines and numbers, both self-hosted (no font requests to
+  other servers). Korean never breaks inside a word.
+- **Start page**: the real app running next to one clear **Choose a folder** / **폴더 선택** button, three short benefit
+  lines, settings below.
+- **Analysing**: a large live count, the photos landing on a contact sheet (still placeholders first), and live
+  reject / check / keep counters. Same speed as 0.2.2.
+- **Review**: photo-first cards with status chips and custom icons for every check; the keep / reject / check buttons
+  show each photo's current status; the overview shows the four groups that add up to the total on one proportional
+  bar; bursts as film strips; the full-size view lists which checks passed.
+- **Help and contact**: a **?** menu (top right) and **문의 · 버그 제보** / **Contact and bug reports** (start page)
+  open the Hello World Instagram profile (@he110w0r1.oi), GitHub Issues, the guide and the source. A feedback form
+  slot is ready (`CONTACT.form` in app.js) but not set yet.
+- Narrow screens: save actions first in the toolbar, categories as a chip row, one-column landing with the demo above
+  the fold. Keyboard focus is visible everywhere; reduced-motion turns off animations and the demo video autoplay.
+- README: new screenshots (dark; light overview and bursts; phone width), Contact section.
+
 ## 0.2.2 - 2026-11-15
 
 - Only what is tested is promised: **Mac · Chrome / Safari**. Firefox and Windows are marked "testing soon"

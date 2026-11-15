@@ -14,6 +14,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: SHOTS ? 2 : 1,
     colorScheme: DARK ? "dark" : "light" });
+  // the page is dark by default; light screenshots ask for the light theme
+  await ctx.addInitScript((t) => { try { localStorage.setItem("wc.theme", JSON.stringify(t)); } catch {} }, DARK ? "dark" : "light");
   const page = await ctx.newPage();
   const errs = [];
   page.on("pageerror", (e) => errs.push(String(e)));

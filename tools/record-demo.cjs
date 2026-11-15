@@ -12,6 +12,8 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const browser = await chromium.launch({ executablePath: process.env.CHROME,
     args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] });
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 2, colorScheme: DARK ? "dark" : "light" });
+  // the page is dark by default; light screenshots ask for the light theme
+  await ctx.addInitScript((t) => { try { localStorage.setItem("wc.theme", JSON.stringify(t)); } catch {} }, DARK ? "dark" : "light");
   const page = await ctx.newPage();
   await page.goto(url);
   // the folder in the browser's private file system; the picker returns it (same as tests/flow.cjs)

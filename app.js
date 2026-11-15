@@ -63,24 +63,40 @@
   const whyKey = (r) => r.primary || (r.reasons || [])[0] || "";
   const technical = (r) => (r.primary && r.verdicts[r.primary][2]) || (r.reasons || []).map((k) => r.verdicts[k][2]).filter(Boolean)[0] || "";
 
+  // icons (inline SVG sprite in index.html); one per check, status and section
+  const ic = (name) => `<svg class="ic" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+  const STATUS_ICON = { reject: "reject", check: "check", ok: "keep", keep: "keep", error: "error" };
+
+  // contact: the Hello World Instagram profile; a feedback form when one exists; GitHub Issues for developers
+  const CONTACT = {
+    instagram: "https://www.instagram.com/he110w0r1.oi/",
+    form: "", // Google Form URL (placeholder: not created yet). Empty = the menu does not show it.
+    issues: "https://github.com/codingintheusa0402/wedding-cull-web/issues/new",
+    source: "https://github.com/codingintheusa0402/wedding-cull-web",
+    guide: "https://github.com/codingintheusa0402/wedding-cull-web#how-to-use-it",
+  };
+
   // static page text (index.html elements with data-i18n); English is read from the page itself
   const KO = {
     privacyTitle: "모든 사진은 이 컴퓨터에서 분석돼요. 아무것도 업로드하지 않아요.",
     ptxt: "사진은 내 컴퓨터에만",
-    eyebrow: "무료 · 오픈소스 · Mac · Chrome / Safari",
-    h1: "사진 2,000장 셀렉,<br>저녁 내내가 아니라 몇 분이면.",
+    h1: "사진 2,000장 셀렉,<br>저녁 내내가 아니라<br>몇 분이면.",
     tagline: "웨딩 · 스냅 · 스튜디오 작가를 위한 무료 셀렉 도구",
-    lede: "흔들리거나 초점이 나간 사진, 눈 감은 사진, 너무 어둡거나 밝은 사진, 렌즈 캡 실수 컷처럼 정리할 만한 컷을 Wedding Cull이 골라 줘요. 연사마다 가장 좋은 컷도 골라 줍니다. 몇 분 만에 확인하고 <b>Lightroom Classic</b>, <b>Adobe Bridge</b>, <b>Photoshop</b>에서 바로 이어서 작업하세요.",
-    pick: "행사 폴더 선택",
-    dropHint: "또는 폴더를 여기로 끌어다 놓기 · JPEG와 RAW (ARW, CR3, CR2, NEF, DNG, RAF, ORF, RW2)",
+    b1: "흔들림, 초점 실수, 눈 감은 사진, 노출 실수를 골라내요",
+    b2: "연사마다 베스트 컷에 별 ★★★",
+    b3: "Lightroom Classic, Bridge, Photoshop에서 바로 이어서 작업",
+    pick: "폴더 선택",
+    dropHint: "또는 폴더를 여기로 끌어다 놓으세요. JPEG와 RAW (ARW, CR3, CR2, NEF, DNG, RAF, ORF, RW2)",
+    demoCap: "실제 속도: 원본 크기 사진 45장을 이 컴퓨터에서 약 12초 만에 분석해요.",
+    contact: "문의 · 버그 제보",
     optStrict: "기준", optApp: "편집 프로그램", optKeep: "연사당 남길 컷", optSub: "하위 폴더 포함",
     s1h: "폴더 선택", s1p: "SD 카드에서 바로, 또는 복사본으로. RAW는 내장 미리보기로 읽어서 빨라요.",
-    s2h: "표시된 사진만 확인", s2p: "제외·확인 사진만 이유별로 보여 주고, 연사마다 베스트 컷에 별을 달아요.",
+    s2h: "표시된 사진만 확인", s2p: "제외할 사진과 확인할 사진만 이유별로 보여 주고, 연사마다 베스트 컷에 별을 달아요.",
     s3h: "편집 프로그램에서 열기", s3p: "별점·라벨·키워드를 표준 XMP로 기록해서 Lightroom, Bridge, Photoshop이 그대로 읽어요.",
-    foot: '<a href="https://github.com/codingintheusa0402/wedding-cull-web">GitHub 오픈소스</a> · MIT 라이선스 · Mac에서 테스트됨: Chrome은 폴더에 바로 저장하고, Safari는 ZIP으로 내려받아요. Firefox·Windows는 테스트 예정이에요.',
+    foot: '<a href="https://github.com/codingintheusa0402/wedding-cull-web">GitHub 오픈소스</a>, MIT 라이선스. Mac에서 테스트했어요: Chrome은 폴더에 바로 저장하고, Safari는 ZIP으로 내려받아요. Firefox와 Windows는 테스트 예정이에요.',
     progOf: ' / <span id="progM">0</span>장',
     progStats: '<span>경과 <b id="progElapsed">0:00</b></span><span>남은 시간 <b id="progLeft">-</b></span><span><b id="progRate">-</b> 장/초</span><span>동시 작업 <b id="progWorkers">-</b>개</span>',
-    legend: '<span><i class="dot reject"></i>제외</span><span><i class="dot check"></i>확인</span><span><i class="dot ok"></i>남김</span>',
+    legend: `<span class="lane reject">${ic("reject")}제외 <b id="laneR">0</b></span><span class="lane check">${ic("check")}확인 <b id="laneC">0</b></span><span class="lane ok">${ic("keep")}남김 <b id="laneK">0</b></span>`,
   };
   const EN = {};
   function applyLang() {
@@ -99,6 +115,8 @@
     }
     for (const b of document.querySelectorAll("#strictStart button")) b.textContent = strictName(b.dataset.v);
     const lb = $("langBtn"); if (lb) { lb.textContent = S.lang === "ko" ? "English" : "한국어"; lb.title = S.lang === "ko" ? "Switch to English" : "한국어로 보기"; }
+    if ($("themeBtn")) themeLabel();
+    if (!$("helpMenu").hidden) $("helpMenu").innerHTML = menuHtml();
     if (typeof initSupport === "function") initSupport();
   }
   function setLang(l) {
@@ -199,7 +217,48 @@
     drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
     drop.addEventListener("dragleave", () => drop.classList.remove("over"));
     drop.addEventListener("drop", onDrop);
-    drop.addEventListener("keydown", (e) => { if (e.key === "Enter") pickFolder(); });
+    drop.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target === drop) pickFolder(); });
+    $("themeBtn").onclick = () => setTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light");
+    $("helpBtn").onclick = (e) => { e.stopPropagation(); toggleMenu($("helpBtn")); };
+    $("contactBtn").onclick = (e) => { e.stopPropagation(); toggleMenu($("contactBtn")); };
+    document.addEventListener("click", (e) => { if (!$("helpMenu").hidden && !e.target.closest("#helpMenu")) closeMenu(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("helpMenu").hidden) { closeMenu(); e.stopPropagation(); } }, true);
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) { const v = document.querySelector(".demo video"); if (v) { v.removeAttribute("autoplay"); v.pause(); v.controls = true; } }
+  }
+
+  // ------------------------------------------------------------------ theme (dark by default) + help / contact menu
+  function setTheme(t) {
+    document.documentElement.dataset.theme = t; store.set("theme", t);
+    const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = t === "light" ? "#e9e9e6" : "#1c1c1f";
+    themeLabel();
+  }
+  function themeLabel() {
+    const light = document.documentElement.dataset.theme === "light", b = $("themeBtn");
+    b.innerHTML = ic(light ? "dark" : "bright");
+    b.title = light ? tr("Dark mode", "어두운 화면") : tr("Light mode", "밝은 화면"); b.setAttribute("aria-label", b.title);
+    const h = $("helpBtn"); h.title = tr("Help and contact", "도움말 · 문의"); h.setAttribute("aria-label", h.title);
+  }
+  function menuHtml() {
+    const item = (href, icon, title, sub) => `<a role="menuitem" href="${href}" target="_blank" rel="noopener">${ic(icon)}<b>${title}</b><small>${sub}</small></a>`;
+    return item(CONTACT.instagram, "ig", tr("Contact and bug reports", "문의 · 버그 제보"), tr("Message @he110w0r1.oi on Instagram", "인스타그램 @he110w0r1.oi로 메시지"))
+      + (CONTACT.form ? item(CONTACT.form, "form", tr("Feedback form", "피드백 남기기"), tr("A short form, no account needed", "짧은 설문, 로그인 없이")) : "")
+      + item(CONTACT.issues, "bug", tr("Report on GitHub", "GitHub에 이슈 남기기"), tr("For developers: GitHub Issues", "개발자용: GitHub Issues"))
+      + `<hr>` + item(CONTACT.guide, "help", tr("How to use it", "사용 방법"), tr("Steps for Lightroom, Bridge and Photoshop", "Lightroom, Bridge, Photoshop에서 여는 방법"))
+      + item(CONTACT.source, "code", tr("Source code", "소스 코드"), tr("Open source, MIT license", "오픈소스, MIT 라이선스"));
+  }
+  function toggleMenu(btn) {
+    const m = $("helpMenu");
+    if (!m.hidden) { closeMenu(); return; }
+    m.innerHTML = menuHtml(); m.hidden = false;
+    const r = btn.getBoundingClientRect();
+    if (btn.id === "contactBtn") { m.style.top = "auto"; m.style.bottom = `${Math.max(12, innerHeight - r.top + 8)}px`; m.style.left = `${Math.max(12, Math.min(r.left, innerWidth - m.offsetWidth - 12))}px`; m.style.right = "auto"; m.style.position = "fixed"; }
+    else { m.style.cssText = ""; }
+    btn.setAttribute("aria-expanded", "true"); m.dataset.from = btn.id;
+    const first = m.querySelector("a"); if (first) first.focus();
+  }
+  function closeMenu() {
+    const m = $("helpMenu"); m.hidden = true;
+    const b = m.dataset.from && $(m.dataset.from); if (b) { b.setAttribute("aria-expanded", "false"); }
   }
 
   function seg(el, value, onChange) {
@@ -327,7 +386,11 @@
     show("progress");
     $("progTitle").textContent = tr(`Analysing ${S.rootName}`, `${S.rootName} 분석 중`);
     $("progM").textContent = photos.length.toLocaleString();
-    $("stream").innerHTML = "";
+    // skeleton tiles: the contact sheet is laid out before the first photo lands
+    $("stream").innerHTML = '<div class="sk"></div>'.repeat(Math.min(photos.length, 24));
+    const lanes = { reject: 0, check: 0, ok: 0 };
+    const laneEl = { reject: "laneR", check: "laneC", ok: "laneK" };
+    for (const id of Object.values(laneEl)) if ($(id)) $(id).textContent = "0";
     const t0 = performance.now();
     let done = 0, fromCache = 0, errors = 0, tFirst = 0;
     const cfg = WC.config(S.strictness);
@@ -349,7 +412,9 @@
       const st = f && !f.error ? WC.summarise(WC.evaluate(f, cfg.thresholds))[0] : "";
       const img = new Image(); img.src = url; img.className = st; img.alt = "";
       const s = $("stream"); s.prepend(img);
+      const sk = s.querySelector(".sk"); if (sk) sk.remove();
       while (s.children.length > 60) s.lastChild.remove();
+      if (st in lanes) { lanes[st]++; const b = $(laneEl[st]); if (b) { b.textContent = lanes[st].toLocaleString(); b.classList.remove("bump"); void b.offsetWidth; b.classList.add("bump"); } }
     };
     // cache first
     const todo = [];
@@ -425,7 +490,7 @@
       <span class="seg" id="appBar"><button data-v="lightroom">Lightroom</button><button data-v="bridge">Bridge + PS</button></span>
       <span class="topctl">
         ${S.root ? `<button class="btn primary" id="saveBtn">${tr("Save to folder", "폴더에 저장")}</button>` : ""}
-        <button class="btn${S.root ? "" : " primary"}" id="zipBtn">${tr("Download XMP (ZIP)", "XMP 내려받기 (ZIP)")}</button>
+        <button class="${S.root ? "linkbtn" : "btn primary"}" id="zipBtn">${tr("Download XMP (ZIP)", "XMP 내려받기 (ZIP)")}</button>
         <button class="linkbtn" id="newBtn" title="${tr("Choose another folder", "다른 폴더 고르기")}">${tr("New folder", "새 폴더")}</button>
       </span>`;
     seg($("strictBar"), S.strictness, (v) => { S.strictness = v; store.set("strictness", v); decide(); render(); toast(tr(`Strictness: ${strictName(v)}`, `기준: ${strictName(v)}`)); });
@@ -460,15 +525,15 @@
     const g = groups();
     const nRej = count(g.reject), nChk = count(g.check);
     const side = $("side");
-    const link = (v, label, n, dot, sub) => `<a data-v="${v}" class="${S.view === v ? "on" : ""}${sub ? " sub" : ""}"><em>${dot ? `<i class="dot ${dot}"></i>` : ""}${esc(label)}</em>${n === null ? "" : `<span>${n.toLocaleString()}</span>`}</a>`;
-    let h = link("overview", tr("Overview", "요약"), S.results.length);
-    h += `<h4>${tr("Flagged", "골라낸 사진")}</h4>` + link("reject", tr("Rejects", "제외"), nRej, "reject");
-    for (const [k, l] of g.reject) if (l.length) h += link(`reject:${k}`, label(k), l.length, null, true);
-    h += link("check", tr("To check", "확인 필요"), nChk, "check");
-    for (const [k, l] of g.check) if (l.length) h += link(`check:${k}`, label(k), l.length, null, true);
-    h += `<h4>${tr("Everything else", "나머지")}</h4>` + link("bursts", tr("Bursts", "연사"), g.bursts.size, "best") + link("kept", tr("Kept", "남김"), g.kept.length, "ok");
-    if (g.errors.length) h += link("errors", tr("Could not read", "읽을 수 없음"), g.errors.length);
-    h += `<h4>${tr("Open in", "열기")}</h4>` + link("apps", "Lightroom · Bridge · Photoshop", null);
+    const link = (v, label, n, icon, st, sub) => `<a data-v="${v}" class="${S.view === v ? "on" : ""}${sub ? " sub" : ""}${st ? " st-" + st : ""}" title="${esc(label)}">${ic(icon)}<em>${esc(label)}</em>${n === null ? "" : `<span>${n.toLocaleString()}</span>`}</a>`;
+    let h = link("overview", tr("Overview", "요약"), S.results.length, "overview");
+    h += `<h4>${tr("Flagged", "골라낸 사진")}</h4>` + link("reject", tr("Rejects", "제외"), nRej, "reject", "reject");
+    for (const [k, l] of g.reject) if (l.length) h += link(`reject:${k}`, label(k), l.length, k, null, true);
+    h += link("check", tr("To check", "확인 필요"), nChk, "check", "check");
+    for (const [k, l] of g.check) if (l.length) h += link(`check:${k}`, label(k), l.length, k, null, true);
+    h += `<h4>${tr("Everything else", "나머지")}</h4>` + link("bursts", tr("Bursts", "연사"), g.bursts.size, "burst", "best") + link("kept", tr("Kept", "남김"), g.kept.length, "keep", "ok");
+    if (g.errors.length) h += link("errors", tr("Could not read", "읽을 수 없음"), g.errors.length, "error");
+    h += `<h4>${tr("Open in", "열기")}</h4>` + link("apps", tr("Open in your editor", "편집 앱에서 열기"), null, "apps");
     h += `<label class="chk details"><input type="checkbox" id="detailsChk" ${S.details ? "checked" : ""}> ${tr("Show technical details", "자세한 수치 보기")}</label>`;
     side.innerHTML = h;
     for (const a of side.querySelectorAll("a")) a.onclick = () => { S.view = a.dataset.v; S.sel.clear(); render(); window.scrollTo(0, 0); };
@@ -488,14 +553,14 @@
       const [st, k] = v.split(":");
       const m = g[st];
       const title = st === "reject" ? tr("Rejects", "제외") : tr("To check", "확인 필요");
-      if (k) c.innerHTML = section(`${title} · ${label(k)}`, m.get(k) || []);
+      if (k) c.innerHTML = section(`${title}: ${label(k)}`, m.get(k) || []);
       else {
         const keys = tr("Press <b>K</b> keep · <b>R</b> reject · <b>C</b> check · <b>U</b> undo · <b>Enter</b> full size.", "<b>K</b> 남김 · <b>R</b> 제외 · <b>C</b> 확인 · <b>U</b> 되돌리기 · <b>Enter</b> 크게 보기");
         const what = st === "reject" ? tr("Marked Reject in Lightroom / Bridge.", "Lightroom / Bridge에서 제외(Reject)로 표시돼요. 원본 파일은 그대로예요.")
           : tr(`Get the yellow label (“${esc(cfgNow().output.check_label)}”).`, `노란 라벨(“${esc(cfgNow().output.check_label)}”)이 붙어요.`);
         let x = `<div class="sec"><h2>${title}</h2><span>${(st === "reject" ? nRej : nChk).toLocaleString()}</span></div>
           <p class="hint">${what} ${keys}</p>`;
-        for (const [kk, l] of m) if (l.length) x += section(label(kk), l, null, true);
+        for (const [kk, l] of m) if (l.length) x += section(label(kk), l, null, kk);
         if (!(st === "reject" ? nRej : nChk)) x += `<p class="empty">${tr("Nothing here.", "없어요.")}</p>`;
         c.innerHTML = x;
       }
@@ -511,18 +576,21 @@
     const speed = st.analysed ? tr(`${plural(st.analysed, "photo")} analysed in ${fmtTime(st.seconds)}${st.cached ? `, ${st.cached.toLocaleString()} from the last run` : ""}`,
       `${st.analysed.toLocaleString()}장을 ${fmtTime(st.seconds)}에 분석${st.cached ? `, ${st.cached.toLocaleString()}장은 지난번 결과` : ""}`)
       : tr(`${plural(st.cached || 0, "photo")} from the last run`, `${(st.cached || 0).toLocaleString()}장 모두 지난번 결과`);
-    let h = `<div class="sec"><h2>${esc(S.rootName)}</h2><span>${speed} · ${tr("strictness", "기준")} ${strictName(S.strictness)}</span></div>
+    const nOk = g.kept.length;
+    let h = `<div class="sec"><h2>${esc(S.rootName)}</h2><span class="meta">${speed}. ${tr("Strictness", "기준")}: ${strictName(S.strictness)}</span></div>
       <div class="summary">
-        <div class="tile"><b>${S.results.length.toLocaleString()}</b><span>${tr("photos", "전체")}</span></div>
-        <div class="tile reject"><b>${nRej.toLocaleString()}</b><span>${tr("rejects", "제외")}</span></div>
-        <div class="tile check"><b>${nChk.toLocaleString()}</b><span>${tr("to check", "확인 필요")}</span></div>
-        <div class="tile best"><b>${g.bursts.size.toLocaleString()}</b><span>${tr(`bursts · ${alt.toLocaleString()} alternates`, `연사 · 다른 컷 ${alt.toLocaleString()}장`)}</span></div>
-        <div class="tile ok"><b>${g.kept.length.toLocaleString()}</b><span>${tr("kept", "남김")}</span></div>
-      </div>`;
+        <div class="tile"><b>${S.results.length.toLocaleString()}</b><span>${ic("overview")}${tr("photos", "전체")}</span></div>
+        <div class="tile reject"><b>${nRej.toLocaleString()}</b><span>${ic("reject")}${tr("rejects", "제외")}</span></div>
+        <div class="tile check"><b>${nChk.toLocaleString()}</b><span>${ic("check")}${tr("to check", "확인 필요")}</span></div>
+        <div class="tile ok"><b>${nOk.toLocaleString()}</b><span>${ic("keep")}${tr("kept", "남김")}</span></div>
+      </div>
+      <div class="ratio" role="img" aria-label="${tr(`${nRej} rejects, ${nChk} to check, ${nOk} kept`, `제외 ${nRej}, 확인 ${nChk}, 남김 ${nOk}`)}"><i class="reject" style="flex-grow:${nRej}"></i><i class="check" style="flex-grow:${nChk}"></i><i class="ok" style="flex-grow:${nOk}"></i></div>
+      <p class="sub-stat">${ic("burst")}<span class="tile best"><b>${g.bursts.size.toLocaleString()}</b></span>${tr(`bursts, ${alt.toLocaleString()} alternate frames (rejected or kept as alternates)`, `연사, 다른 컷 ${alt.toLocaleString()}장 (베스트가 아닌 컷)`)}</p>`;
     if (S.faceError) h += `<p class="hint">⚠️ ${tr(`Face and closed-eye checks are off in this browser (no WebGL): ${esc(S.faceError)}. Blur, exposure and bursts still work.`, `이 브라우저에서는 얼굴·눈 감음 검사가 꺼져 있어요 (WebGL 없음): ${esc(S.faceError)}. 흔들림, 밝기, 연사는 그대로 돼요.`)}</p>`;
-    const rows = WC.CHECKS.map((k) => `<tr><td><i class="dot reject"></i>${esc(label(k))}</td><td>${(g.reject.get(k) || []).length}</td><td>${(g.check.get(k) || []).length}</td></tr>`).join("");
-    h += `<div class="apps" style="margin-bottom:18px"><div class="app"><h3>${tr("Flagged by reason", "이유별")}</h3>
-      <table style="width:100%;font-size:14px;border-collapse:collapse;margin-top:6px"><tr style="color:var(--muted);text-align:left"><th></th><th>${tr("reject", "제외")}</th><th>${tr("check", "확인")}</th></tr>${rows}</table></div>
+    const cnt = (n) => `<td class="${n ? "" : "z"}">${n}</td>`;
+    const rows = WC.CHECKS.map((k) => `<tr><td><span class="rl">${ic(k)}${esc(label(k))}</span></td>${cnt((g.reject.get(k) || []).length)}${cnt((g.check.get(k) || []).length)}</tr>`).join("");
+    h += `<div class="panels"><div class="app"><h3>${tr("Flagged by reason", "이유별")}</h3>
+      <table class="reasons"><tr><th></th><th>${tr("reject", "제외")}</th><th>${tr("check", "확인")}</th></tr>${rows}</table></div>
       <div class="app"><h3>${tr("Next", "다음 단계")}</h3><ol><li>${tr("Look through <b>Rejects</b> and <b>To check</b>; fix any wrong call with K / R / C.", "<b>제외</b>와 <b>확인 필요</b>를 훑어보고, 잘못 고른 건 K / R / C로 고치세요.")}</li>
       <li>${S.root ? tr("<b>Save to folder</b> writes ratings, labels and keywords (XMP).", "<b>폴더에 저장</b>을 누르면 별점·라벨·키워드(XMP)가 기록돼요.") : tr("<b>Download XMP (ZIP)</b> and unzip it into the event folder.", "<b>XMP 내려받기 (ZIP)</b> 후 행사 폴더에 압축을 푸세요.")}</li>
       <li>${tr(`Open the folder in <b>${S.app === "lightroom" ? "Lightroom Classic" : "Bridge / Photoshop"}</b> (steps under <a href="#" data-go="apps">Open in</a>).`, `<b>${S.app === "lightroom" ? "Lightroom Classic" : "Bridge / Photoshop"}</b>에서 폴더를 여세요 (방법은 <a href="#" data-go="apps">열기</a>).`)}</li></ol></div></div>`;
@@ -533,7 +601,7 @@
 
   function section(title, list, hint, sub) {
     if (!list.length) return `<div class="sec"><h2>${esc(title)}</h2></div><p class="empty">${tr("Nothing here.", "없어요.")}</p>`;
-    return `<div class="sec"><h${sub ? 3 : 2} style="${sub ? "font:600 18px var(--serif);margin:0" : ""}">${esc(title)}</h${sub ? 3 : 2}><span>${list.length.toLocaleString()}</span></div>
+    return `<div class="sec">${sub ? `<h3>${ic(sub)}${esc(title)}</h3>` : `<h2>${esc(title)}</h2>`}<span>${list.length.toLocaleString()}</span></div>
       ${hint ? `<p class="hint">${esc(hint)}</p>` : ""}<div class="grid">${list.map(cardHtml).join("")}</div>`;
   }
 
@@ -545,9 +613,9 @@
     const pill = r.status === "reject" || r.status === "check" ? statusName(r.status) : "";
     const dec = r.override;
     return `<div class="card${r.status === "reject" ? " dim" : ""}${r.role === "best" ? " best" : ""}${S.sel.has(r.id) ? " sel" : ""}" tabindex="0" data-id="${r.id}">
-      <div class="im">${url ? `<img src="${url}" alt="${esc(r.name)}" loading="lazy">` : ""}${pill ? `<span class="pill ${r.status}">${pill}</span>` : ""}${stars ? `<span class="star">${stars}</span>` : ""}${dec ? `<span class="ov">${tr("you", "직접")}: ${decName(dec)}</span>` : ""}</div>
+      <div class="im">${url ? `<img src="${url}" alt="${esc(r.name)}" loading="lazy">` : ""}${pill ? `<span class="pill ${r.status}">${ic(STATUS_ICON[r.status])}${pill}</span>` : ""}${stars ? `<span class="star">${stars}</span>` : ""}${dec ? `<span class="ov">${tr("you", "직접")}: ${decName(dec)}</span>` : ""}</div>
       <div class="meta"><div class="nm" title="${esc(r.name)}">${esc(r.name)}</div><div class="why">${esc(why)}</div>
-      ${r.status === "error" ? "" : `<div class="acts"><button data-d="keep" class="${dec === "keep" ? "on" : ""}" title="${decName("keep")} (K)">${decName("keep")}</button><button data-d="reject" class="${dec === "reject" ? "on" : ""}" title="${decName("reject")} (R)">${decName("reject")}</button><button data-d="check" class="${dec === "check" ? "on" : ""}" title="${decName("check")} (C)">${decName("check")}</button></div>`}</div></div>`;
+      ${r.status === "error" ? "" : `<div class="acts">${["keep", "reject", "check"].map((d) => `<button data-d="${d}" class="${dec === d ? "on" : ""}${(d === "keep" ? "ok" : d) === r.status ? " is is-" + d : ""}" title="${decName(d)} (${d[0].toUpperCase()})">${decName(d)}</button>`).join("")}</div>`}</div></div>`;
   }
 
   function burstsHtml(g) {
@@ -558,7 +626,7 @@
     let h = `<div class="sec"><h2>${tr("Bursts", "연사")}</h2><span>${g.bursts.size.toLocaleString()}</span></div>${ctl}<p class="hint">${tr("Frames taken seconds apart that look alike.", "몇 초 간격으로 찍은 비슷한 사진이에요.")} ${nb}</p>`;
     for (const [b, list] of g.bursts) {
       const best = list.filter((r) => r.role === "best").map((r) => r.name);
-      h += `<div class="burst"><header><span>${tr(`Burst ${b} · ${list.length} frames`, `연사 ${b} · ${list.length}장`)}</span><span>${tr("best", "베스트")}: ${esc(best.length ? best.join(", ") : "-")}</span></header><div class="grid">${list.map(cardHtml).join("")}</div></div>`;
+      h += `<div class="burst"><header><span><b>${tr(`Burst ${b}`, `연사 ${b}`)}</b>, ${tr(`${list.length} frames`, `${list.length}장`)}</span><span>${tr("Best", "베스트")}: ${esc(best.length ? best.join(", ") : "-")}</span></header><div class="grid">${list.map(cardHtml).join("")}</div></div>`;
     }
     return h;
   }
@@ -643,6 +711,7 @@
     for (const id of ids) for (const el of document.querySelectorAll(`.card[data-id="${id}"]`)) {
       const tmp = document.createElement("div"); tmp.innerHTML = cardHtml(S.resById.get(id));
       const nu = tmp.firstElementChild; el.replaceWith(nu); wireCard(nu);
+      if (dec) nu.classList.add("landed", "l-" + dec);
       if (document.activeElement === document.body) nu.focus();
     }
     refreshSideCounts();
@@ -729,15 +798,15 @@
     const f = r.f || {}, m = f.meta || {};
     const v = r.verdicts || {};
     const lines = WC.CHECKS.map((k) => { const x = v[k] || ["ok", 0, ""]; const p = plain(r, k);
-      return `<div><i class="dot ${x[0]}"></i></div><div><b>${esc(label(k))}</b>${p ? `<br>${esc(p)}` : ""}${S.details && x[2] ? `<br><span style="color:#a39887">${esc(x[2])}</span>` : ""}</div>`; }).join("");
+      return `<div class="${x[0]}">${ic(k)}<div><b>${esc(label(k))}</b>${p ? `<div class="p">${esc(p)}</div>` : x[0] === "ok" ? `<div class="t">${tr("No problem", "문제 없음")}</div>` : ""}${S.details && x[2] ? `<div class="t">${esc(x[2])}</div>` : ""}</div></div>`; }).join("");
     const burst = r.burst_size > 1 ? S.results.filter((x) => x.burst === r.burst) : [];
     const dec = r.override;
     $("lbSide").innerHTML = `<h3>${esc(r.name)}</h3>
-      <div>${r.status === "error" ? esc(r.error) : `<span class="pill ${r.status}" style="position:static;display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;color:#fff;text-transform:uppercase">${statusName(r.status)}</span> ${r.role === "best" ? tr("· best of burst ★★★", "· 연사 베스트 ★★★") : r.role === "alternate" ? tr("· alternate", "· 연사 중 다른 컷") : ""}`}</div>
-      <div class="acts"><button data-d="keep" class="${dec === "keep" ? "on" : ""}">${decName("keep")} K</button><button data-d="reject" class="${dec === "reject" ? "on" : ""}">${decName("reject")} R</button><button data-d="check" class="${dec === "check" ? "on" : ""}">${decName("check")} C</button></div>
+      <div class="status">${r.status === "error" ? esc(r.error) : `<span class="pill ${r.status}">${ic(STATUS_ICON[r.status])}${statusName(r.status)}</span> ${r.role === "best" ? tr("Best of its burst ★★★", "연사 베스트 ★★★") : r.role === "alternate" ? tr("Alternate in a burst", "연사 중 다른 컷") : ""}`}</div>
+      <div class="acts"><button data-d="keep" class="${dec === "keep" ? "on" : ""}">${decName("keep")}<kbd>K</kbd></button><button data-d="reject" class="${dec === "reject" ? "on" : ""}">${decName("reject")}<kbd>R</kbd></button><button data-d="check" class="${dec === "check" ? "on" : ""}">${decName("check")}<kbd>C</kbd></button></div>
       <div class="v">${lines}</div>
-      ${burst.length ? `<div style="font-size:13px;margin-bottom:4px">${tr(`Burst of ${burst.length}`, `연사 ${burst.length}장`)}</div><div class="strip">${burst.map((x) => `<img src="${S.thumbs.get(x.id) || ""}" data-id="${x.id}" class="${x.id === r.id ? "cur" : ""} ${x.role === "best" ? "best" : ""}" title="${esc(x.name)}">`).join("")}</div>` : ""}
-      ${S.details ? `<div style="font-size:12.5px;color:#a39887;margin-top:14px;line-height:1.7">
+      ${burst.length ? `<div class="bl">${tr(`Burst of ${burst.length}`, `연사 ${burst.length}장`)}</div><div class="strip">${burst.map((x) => `<img src="${S.thumbs.get(x.id) || ""}" data-id="${x.id}" class="${x.id === r.id ? "cur" : ""} ${x.role === "best" ? "best" : ""}" title="${esc(x.name)}">`).join("")}</div>` : ""}
+      ${S.details ? `<div class="tech">
         Subject sharpness ${r.sharp ?? "-"} (${esc(r.sharp_src || "")}) · faces ${r.n_faces ?? 0}${r.max_blink != null ? ` · blink ${r.max_blink}` : ""}<br>
         Median brightness ${f.median ?? "-"} · clipped ${f.clip_hi != null ? (f.clip_hi * 100).toFixed(1) + "%" : "-"}<br>
         ${m.time_text ? esc(m.time_text.replace("T", " ")) + " · " : ""}${m.iso ? "ISO " + m.iso + " · " : ""}${m.exposure_time ? (m.exposure_time < 1 ? "1/" + Math.round(1 / m.exposure_time) : m.exposure_time) + " s · " : ""}${m.fnumber ? "f/" + m.fnumber : ""}${m.ec ? " · EC " + (m.ec > 0 ? "+" : "") + m.ec.toFixed(1) : ""}

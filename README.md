@@ -49,12 +49,12 @@ Each photo says why in plain words ("Camera shake: the picture is smeared"); tic
 <td><img src="docs/media/02-progress.jpg" alt="Live progress"><br><sub><b>Live progress</b>: count, speed, time left; red = reject, yellow = check</sub></td>
 </tr>
 <tr>
-<td><img src="docs/media/03-overview-dark.jpg" alt="Overview in dark mode"><br><sub><b>Overview</b> (dark mode follows your system)</sub></td>
+<td><img src="docs/media/03-overview-light.jpg" alt="Overview in light mode"><br><sub><b>Overview</b> in light mode (dark is the default; the sun / moon button switches)</sub></td>
 <td><img src="docs/media/07-apps.jpg" alt="Open in Lightroom, Bridge or Photoshop"><br><sub><b>Open in</b> Lightroom Classic, Bridge or Photoshop</sub></td>
 </tr>
 <tr>
 <td><img src="docs/media/09-korean.jpg" alt="The app in Korean"><br><sub><b>한국어</b>: switch with the button at the top right (follows your browser language)</sub></td>
-<td></td>
+<td><img src="docs/media/10-mobile.jpg" alt="On a phone-width screen"><br><sub><b>Narrow screens</b>: the same app on a phone-width window</sub></td>
 </tr>
 </table>
 
@@ -62,7 +62,7 @@ Each photo says why in plain words ("Camera shake: the picture is smeared"); tic
 
 1. Open **[Wedding Cull](https://codingintheusa0402.github.io/wedding-cull-web/)** in **Chrome** on a Mac (Safari works too, without saving into the folder: see [Browsers](#browsers)).
 2. Pick **Lightroom Classic** or **Bridge + Photoshop** under *I edit in*, a strictness (*Normal* is a good start) and how many of the best frames to keep per burst (*1* by default). The **한국어 / English** button at the top right switches the language.
-3. Click **Choose event folder** (straight from the SD card is fine) and allow access. JPEG and RAW (ARW, CR3, CR2, NEF, DNG, RAF, ORF, RW2).
+3. Click **Choose a folder** (**폴더 선택**; straight from the SD card is fine) and allow access. JPEG and RAW (ARW, CR3, CR2, NEF, DNG, RAF, ORF, RW2).
 4. Look through **Rejects** and **To check**. Fix any wrong call with K / R / C.
 5. Click **Save to folder**. It shows exactly what it will write and asks first.
 
@@ -169,6 +169,13 @@ permission. They are **not** covered by the MIT license and may not be reused. F
   detection. The desktop app's current check misses too many and flags too many good photos, so it is not in the web
   version.
 
+## Contact
+
+- **Questions and bug reports**: message [@he110w0r1.oi on Instagram](https://www.instagram.com/he110w0r1.oi/)
+  (also in the app: **?** at the top right, or **Contact and bug reports** / **문의 · 버그 제보** at the bottom of the start page).
+- **Feedback form**: coming soon.
+- **Developers**: [GitHub Issues](https://github.com/codingintheusa0402/wedding-cull-web/issues).
+
 ## License
 
-Code: [MIT](LICENSE). Bundled libraries and models: see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) (Apache-2.0, MIT).
+Code: [MIT](LICENSE). Bundled libraries, models and fonts: see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) (Apache-2.0, MIT, SIL OFL 1.1).
