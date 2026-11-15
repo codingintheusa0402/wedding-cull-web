@@ -12,6 +12,10 @@
 <meta property="og:url" content="https://codingintheusa0402.github.io/wedding-cull-web/">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/icon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#14172d">
 <link rel="stylesheet" href="app.css">
 </head>
 <body>
@@ -21,9 +25,10 @@
   </a>
   <div class="bar-mid" id="barMid"></div>
   <div class="bar-right">
-    <span class="privacy" title="Every photo is analysed on this computer. Nothing is uploaded.">
+    <button class="linkbtn lang" id="langBtn" lang="ko">한국어</button>
+    <span class="privacy" data-i18n-title="privacyTitle" title="Every photo is analysed on this computer. Nothing is uploaded.">
       <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="currentColor" d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Zm-1.2 14.2-3.5-3.5 1.4-1.4 2.1 2.1 4.6-4.6 1.4 1.4-6 6Z"/></svg>
-      <span class="ptxt">Photos stay on your computer</span>
+      <span class="ptxt" data-i18n="ptxt">Photos stay on your computer</span>
     </span>
   </div>
 </header>
@@ -31,40 +36,45 @@
 <!-- ============================================================ start -->
 <main id="start" class="screen">
   <section class="hero">
-    <p class="eyebrow">Free &amp; open source · Mac and Windows</p>
-    <h1>Cull a 2,000-photo wedding<br>in minutes, not evenings.</h1>
-    <p class="lede">Wedding Cull flags the frames you would delete: blur and camera shake, missed focus, closed eyes,
+    <p class="eyebrow" data-i18n="eyebrow">Free &amp; open source · Mac and Windows</p>
+    <h1 data-i18n="h1">Cull a 2,000-photo wedding<br>in minutes, not evenings.</h1>
+    <p class="lede" data-i18n="lede">Wedding Cull flags the frames you would delete: blur and camera shake, missed focus, closed eyes,
       too dark or too bright, lens-cap misfires. It picks the best shot of every burst. You confirm in a few minutes,
       then open the result in <b>Lightroom Classic</b>, <b>Adobe Bridge</b> or <b>Photoshop</b>.</p>
 
     <div class="drop" id="drop" tabindex="0">
       <svg viewBox="0 0 24 24" width="40" height="40" aria-hidden="true"><path fill="currentColor" d="M10 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-8l-2-2Zm2 5 4 4h-3v4h-2v-4H8l4-4Z"/></svg>
-      <button class="btn primary big" id="pick">Choose event folder</button>
-      <p>or drop the folder here · JPEG and RAW (ARW, CR3, CR2, NEF, DNG, RAF, ORF, RW2)</p>
+      <button class="btn primary big" id="pick" data-i18n="pick">Choose event folder</button>
+      <p data-i18n="dropHint">or drop the folder here · JPEG and RAW (ARW, CR3, CR2, NEF, DNG, RAF, ORF, RW2)</p>
     </div>
 
     <div class="opts">
-      <label>Strictness
+      <label><span data-i18n="optStrict">Strictness</span>
         <span class="seg" id="strictStart" role="radiogroup">
           <button data-v="gentle">Gentle</button><button data-v="normal" class="on">Normal</button><button data-v="strict">Strict</button>
         </span>
       </label>
-      <label>I edit in
+      <label><span data-i18n="optApp">I edit in</span>
         <span class="seg" id="appStart" role="radiogroup">
           <button data-v="lightroom" class="on">Lightroom Classic</button><button data-v="bridge">Bridge + Photoshop</button>
         </span>
       </label>
-      <label class="chk"><input type="checkbox" id="recursive"> Include subfolders</label>
+      <label><span data-i18n="optKeep">Best per burst</span>
+        <span class="seg keepSeg" id="keepStart" role="radiogroup">
+          <button data-v="1" class="on">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button>
+        </span>
+      </label>
+      <label class="chk"><input type="checkbox" id="recursive"> <span data-i18n="optSub">Include subfolders</span></label>
     </div>
     <p class="support" id="support"></p>
   </section>
 
   <section class="how">
-    <div><b>1</b><h3>Choose the folder</h3><p>Straight from the SD card or a copy. RAW files are read through their embedded preview, so it is fast.</p></div>
-    <div><b>2</b><h3>Check the flagged ones</h3><p>Only rejects and "check" photos are shown, grouped by reason, each burst with its best frame starred.</p></div>
-    <div><b>3</b><h3>Open in your editor</h3><p>Ratings, labels and keywords are written as standard XMP: Lightroom, Bridge and Photoshop read them.</p></div>
+    <div><b>1</b><h3 data-i18n="s1h">Choose the folder</h3><p data-i18n="s1p">Straight from the SD card or a copy. RAW files are read through their embedded preview, so it is fast.</p></div>
+    <div><b>2</b><h3 data-i18n="s2h">Check the flagged ones</h3><p data-i18n="s2p">Only rejects and "check" photos are shown, grouped by reason, each burst with its best frame starred.</p></div>
+    <div><b>3</b><h3 data-i18n="s3h">Open in your editor</h3><p data-i18n="s3p">Ratings, labels and keywords are written as standard XMP: Lightroom, Bridge and Photoshop read them.</p></div>
   </section>
-  <footer class="foot">
+  <footer class="foot" data-i18n="foot">
     <a href="https://github.com/codingintheusa0402/wedding-cull-web">Open source on GitHub</a> · MIT license ·
     Chrome or Edge on Mac and Windows saves straight into the folder; Safari and Firefox download a ZIP.
   </footer>
@@ -74,10 +84,10 @@
 <main id="progress" class="screen" hidden>
   <section class="prog">
     <h2 id="progTitle">Analysing</h2>
-    <div class="count"><span id="progN">0</span><small> of <span id="progM">0</span> photos</small></div>
+    <div class="count"><span id="progN">0</span><small data-i18n="progOf"> of <span id="progM">0</span> photos</small></div>
     <div class="meter"><i id="progBar"></i></div>
-    <div class="stats"><span>Elapsed <b id="progElapsed">0:00</b></span><span>Left <b id="progLeft">-</b></span><span><b id="progRate">-</b> photos/s</span><span><b id="progWorkers">-</b> parallel workers</span></div>
-    <div class="legend"><span><i class="dot reject"></i>reject</span><span><i class="dot check"></i>check</span><span><i class="dot ok"></i>keep</span></div>
+    <div class="stats" data-i18n="progStats"><span>Elapsed <b id="progElapsed">0:00</b></span><span>Left <b id="progLeft">-</b></span><span><b id="progRate">-</b> photos/s</span><span><b id="progWorkers">-</b> parallel workers</span></div>
+    <div class="legend" data-i18n="legend"><span><i class="dot reject"></i>reject</span><span><i class="dot check"></i>check</span><span><i class="dot ok"></i>keep</span></div>
     <div class="stream" id="stream"></div>
     <p class="muted" id="progNote">Measuring sharpness, faces, eyes and exposure on this computer. Nothing is uploaded.</p>
   </section>

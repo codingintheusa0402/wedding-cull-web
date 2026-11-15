@@ -18,7 +18,7 @@
     thumbs: new Map(),     // id -> object URL
     results: [], resById: new Map(),
     overrides: new Map(),  // file name -> keep | reject | check
-    strictness: "normal", app: "lightroom", recursive: false, embed: true,
+    strictness: "normal", app: "lightroom", recursive: false, embed: true, keep: 1, lang: "en", details: false,
     view: "overview", faceError: null, stats: null, sel: new Set(),
   };
   window.WCApp = { S, WC };
@@ -30,6 +30,81 @@
   };
   S.strictness = store.get("strictness", "normal");
   S.app = store.get("app", "lightroom");
+  S.keep = Math.max(1, Math.min(5, store.get("keep", 1) | 0 || 1));
+  S.lang = store.get("lang", /^ko\b/i.test(navigator.language || "") ? "ko" : "en") === "ko" ? "ko" : "en";
+  S.details = !!store.get("details", false);
+
+  // ------------------------------------------------------------------ language (English / 한국어)
+  // tr(en, ko): the visible text in the chosen language. Korean never says 삭제/버림: nothing is deleted.
+  const tr = (en, ko) => (S.lang === "ko" ? ko : en);
+  const KO_LABELS = { accidental: "실수 컷", blur: "흔들림·초점", missed_focus: "초점 빗나감", eyes: "눈 감음", dark: "너무 어두움", bright: "너무 밝음" };
+  const label = (k) => (S.lang === "ko" ? KO_LABELS[k] || WC.LABELS[k] || k : WC.LABELS[k] || k);
+  const strictName = (v) => tr({ gentle: "Gentle", normal: "Normal", strict: "Strict" }[v], { gentle: "느슨하게", normal: "보통", strict: "엄격하게" }[v]);
+  const statusName = (st) => tr({ ok: "Keep", reject: "Reject", check: "Check" }[st] || st, { ok: "남김", reject: "제외", check: "확인" }[st] || st);
+  const decName = (d) => statusName(d === "keep" ? "ok" : d);
+  const nPhotos = (n) => (S.lang === "ko" ? `${n.toLocaleString()}장` : plural(n, "photo"));
+  /** plain-language reason for one check (beginner words); the measured numbers are behind "details" */
+  function plain(r, k) {
+    const v = (r.verdicts || {})[k];
+    if (!v || v[0] === "ok") return "";
+    const t = v[2] || "";
+    if (k === "accidental") return /lens cap|blank/.test(t) ? tr("Almost nothing in the frame (lens cap?)", "거의 아무것도 안 찍혔어요 (렌즈 캡?)")
+      : tr("No subject, only sky or ground?", "피사체 없이 하늘이나 바닥만 찍혔어요");
+    if (k === "blur") return /shake|motion/.test(t) ? tr("Camera shake: the picture is smeared", "카메라가 흔들려서 사진이 번졌어요")
+      : tr("Out of focus: the picture is soft", "초점이 안 맞아서 흐릿해요");
+    if (k === "missed_focus") return tr("Focus landed in front of or behind the face", "초점이 얼굴이 아니라 앞이나 뒤에 맞았어요");
+    if (k === "eyes") { const m = /(\d+) of (\d+) main faces/.exec(t);
+      return m ? tr(`Eyes closed (${m[1]} of ${m[2]} people)`, `${m[2]}명 중 ${m[1]}명이 눈을 감았어요`) : tr("Eyes closed", "눈을 감았어요"); }
+    if (k === "dark") return tr("Too dark", "너무 어두워요");
+    if (k === "bright") return /face/.test(t) ? tr("The face is washed out (too bright)", "얼굴이 하얗게 날아갔어요")
+      : tr("Too bright: large areas are pure white", "너무 밝아서 하얗게 날아간 부분이 많아요");
+    return t;
+  }
+  const whyKey = (r) => r.primary || (r.reasons || [])[0] || "";
+  const technical = (r) => (r.primary && r.verdicts[r.primary][2]) || (r.reasons || []).map((k) => r.verdicts[k][2]).filter(Boolean)[0] || "";
+
+  // static page text (index.html elements with data-i18n); English is read from the page itself
+  const KO = {
+    privacyTitle: "모든 사진은 이 컴퓨터에서 분석돼요. 아무것도 업로드하지 않아요.",
+    ptxt: "사진은 내 컴퓨터에만",
+    eyebrow: "무료 · 오픈소스 · Mac과 Windows",
+    h1: "2,000장 웨딩 셀렉,<br>저녁 내내가 아니라 몇 분이면.",
+    lede: "흔들리거나 초점이 나간 사진, 눈 감은 사진, 너무 어둡거나 밝은 사진, 렌즈 캡 실수 컷처럼 정리할 만한 컷을 Wedding Cull이 골라 줘요. 연사마다 가장 좋은 컷도 골라 줍니다. 몇 분 만에 확인하고 <b>Lightroom Classic</b>, <b>Adobe Bridge</b>, <b>Photoshop</b>에서 바로 이어서 작업하세요.",
+    pick: "행사 폴더 선택",
+    dropHint: "또는 폴더를 여기로 끌어다 놓기 · JPEG와 RAW (ARW, CR3, CR2, NEF, DNG, RAF, ORF, RW2)",
+    optStrict: "기준", optApp: "편집 프로그램", optKeep: "연사당 남길 컷", optSub: "하위 폴더 포함",
+    s1h: "폴더 선택", s1p: "SD 카드에서 바로, 또는 복사본으로. RAW는 내장 미리보기로 읽어서 빨라요.",
+    s2h: "표시된 사진만 확인", s2p: "제외·확인 사진만 이유별로 보여 주고, 연사마다 베스트 컷에 별을 달아요.",
+    s3h: "편집 프로그램에서 열기", s3p: "별점·라벨·키워드를 표준 XMP로 기록해서 Lightroom, Bridge, Photoshop이 그대로 읽어요.",
+    foot: '<a href="https://github.com/codingintheusa0402/wedding-cull-web">GitHub 오픈소스</a> · MIT 라이선스 · Mac·Windows의 Chrome이나 Edge는 폴더에 바로 저장하고, Safari·Firefox는 ZIP으로 내려받아요.',
+    progOf: ' / <span id="progM">0</span>장',
+    progStats: '<span>경과 <b id="progElapsed">0:00</b></span><span>남은 시간 <b id="progLeft">-</b></span><span><b id="progRate">-</b> 장/초</span><span>동시 작업 <b id="progWorkers">-</b>개</span>',
+    legend: '<span><i class="dot reject"></i>제외</span><span><i class="dot check"></i>확인</span><span><i class="dot ok"></i>남김</span>',
+  };
+  const EN = {};
+  function applyLang() {
+    document.documentElement.lang = S.lang;
+    for (const el of document.querySelectorAll("[data-i18n]")) {
+      const k = el.dataset.i18n;
+      if (!(k in EN)) EN[k] = el.innerHTML;
+      // keep live numbers while switching during an analysis
+      const keep = {}; for (const x of el.querySelectorAll("[id]")) keep[x.id] = x.textContent;
+      el.innerHTML = S.lang === "ko" && KO[k] ? KO[k] : EN[k];
+      for (const [id, t] of Object.entries(keep)) { const x = el.querySelector("#" + id); if (x) x.textContent = t; }
+    }
+    for (const el of document.querySelectorAll("[data-i18n-title]")) {
+      const k = el.dataset.i18nTitle; if (!(k in EN)) EN[k] = el.title;
+      el.title = S.lang === "ko" && KO[k] ? KO[k] : EN[k];
+    }
+    for (const b of document.querySelectorAll("#strictStart button")) b.textContent = strictName(b.dataset.v);
+    const lb = $("langBtn"); if (lb) { lb.textContent = S.lang === "ko" ? "English" : "한국어"; lb.title = S.lang === "ko" ? "Switch to English" : "한국어로 보기"; }
+    if (typeof initSupport === "function") initSupport();
+  }
+  function setLang(l) {
+    S.lang = l; store.set("lang", l); applyLang();
+    if (!$("review").hidden) { renderBar("review"); render(); }
+    if (!$("progress").hidden && S.rootName) $("progTitle").textContent = tr(`Analysing ${S.rootName}`, `${S.rootName} 분석 중`);
+  }
 
   // ------------------------------------------------------------------ IndexedDB cache (features + thumbnails)
   const DB = {
@@ -102,14 +177,21 @@
 
   // ------------------------------------------------------------------ start screen
   const canWrite = "showDirectoryPicker" in window;
-  function initStart() {
+  function initSupport() {
     const sup = $("support");
     sup.innerHTML = canWrite
-      ? "Your browser can save ratings straight into the folder. Choosing a folder asks for permission; nothing is uploaded."
-      : "This browser can read folders but not write to them: you get the ratings as a ZIP of XMP sidecars, which Lightroom and Bridge read for RAW files. For JPEGs and one-click saving use <b>Chrome</b> or <b>Edge</b> (Mac and Windows).";
+      ? tr("Your browser can save ratings straight into the folder. Choosing a folder asks for permission; nothing is uploaded.",
+        "이 브라우저는 별점을 폴더에 바로 저장할 수 있어요. 폴더를 고르면 권한을 물어보고, 아무것도 업로드하지 않아요.")
+      : tr("This browser can read folders but not write to them: you get the ratings as a ZIP of XMP sidecars, which Lightroom and Bridge read for RAW files. For JPEGs and one-click saving use <b>Chrome</b> or <b>Edge</b> (Mac and Windows).",
+        "이 브라우저는 폴더를 읽을 수만 있고 쓸 수는 없어요. 별점은 XMP 사이드카 ZIP으로 받게 되는데, Lightroom과 Bridge는 RAW 파일에서만 읽어요. JPEG와 원클릭 저장은 <b>Chrome</b>이나 <b>Edge</b>(Mac·Windows)를 쓰세요.");
     if (!canWrite) sup.classList.add("warn");
+  }
+  function initStart() {
+    applyLang();
+    $("langBtn").onclick = () => setLang(S.lang === "ko" ? "en" : "ko");
     seg($("strictStart"), S.strictness, (v) => { S.strictness = v; store.set("strictness", v); });
     seg($("appStart"), S.app, (v) => { S.app = v; store.set("app", v); });
+    seg($("keepStart"), String(S.keep), (v) => setKeep(v, false));
     $("recursive").onchange = (e) => { S.recursive = e.target.checked; };
     $("pick").onclick = pickFolder;
     const drop = $("drop");
@@ -136,7 +218,7 @@
       try {
         const h = await window.showDirectoryPicker({ id: "wedding-cull", mode: "read" });
         await openHandle(h);
-      } catch (e) { if (e.name !== "AbortError") toast(`Could not open the folder: ${e.message}`); }
+      } catch (e) { if (e.name !== "AbortError") toast(tr(`Could not open the folder: ${e.message}`, `폴더를 열 수 없어요: ${e.message}`)); }
       return;
     }
     if (!fallbackInput) {
@@ -159,7 +241,7 @@
     }
     const entry = item.webkitGetAsEntry && item.webkitGetAsEntry();
     if (entry && entry.isDirectory) { openFileList(await filesFromEntry(entry)); return; }
-    toast("Drop a folder, not single files.");
+    toast(tr("Drop a folder, not single files.", "파일이 아니라 폴더를 끌어다 놓아 주세요."));
   }
 
   function filesFromEntry(dirEntry) {
@@ -232,7 +314,8 @@
 
   // ------------------------------------------------------------------ analysis
   async function start(list) {
-    if (!list.length) { toast("No JPEG or RAW photos in that folder" + (S.recursive ? "." : " (turn on Include subfolders?).")); return; }
+    if (!list.length) { toast(tr("No JPEG or RAW photos in that folder" + (S.recursive ? "." : " (turn on Include subfolders?)."),
+      "이 폴더에 JPEG나 RAW 사진이 없어요" + (S.recursive ? "." : " (하위 폴더 포함을 켜 보세요)."))); return; }
     const { photos, companions } = WC.pairPhotos(list);
     S.entries = photos; S.companions = companions; S.byId.clear(); S.feats.clear();
     for (const u of S.thumbs.values()) URL.revokeObjectURL(u);
@@ -241,7 +324,7 @@
     const saved = await DB.get("decisions", S.rootName);
     S.overrides = new Map(saved && saved.overrides ? saved.overrides : []);
     show("progress");
-    $("progTitle").textContent = `Analysing ${S.rootName}`;
+    $("progTitle").textContent = tr(`Analysing ${S.rootName}`, `${S.rootName} 분석 중`);
     $("progM").textContent = photos.length.toLocaleString();
     $("stream").innerHTML = "";
     const t0 = performance.now();
@@ -283,11 +366,11 @@
     tick();
     if (todo.length) {
       if (!pool) {
-        $("progNote").textContent = "Loading the analysis engine (OpenCV + MediaPipe, once)…";
+        $("progNote").textContent = tr("Loading the analysis engine (OpenCV + MediaPipe, once)…", "분석 엔진을 불러오는 중이에요 (OpenCV + MediaPipe, 처음 한 번만)…");
         pool = new Pool(cores());
         const outs = await pool.ready();
         S.faceError = (outs.find((o) => o.faceError) || {}).faceError || null;
-        $("progNote").textContent = "Measuring sharpness, faces, eyes and exposure on this computer. Nothing is uploaded.";
+        $("progNote").textContent = tr("Measuring sharpness, faces, eyes and exposure on this computer. Nothing is uploaded.", "이 컴퓨터에서 선명도, 얼굴, 눈, 밝기를 재고 있어요. 아무것도 업로드하지 않아요.");
       }
       $("progWorkers").textContent = pool.n;
       await Promise.all(todo.map((e) => pool.run({ type: "analyse", id: e.id, file: e._file, isRaw: e.isRaw, thumbPx: 480 }).then(async (msg) => {
@@ -313,8 +396,16 @@
   }
 
   function cfgNow() {
-    return WC.config(S.strictness, { output: { check_label: S.app === "lightroom" ? WC.ADOBE.lightroom.label : WC.ADOBE.bridge.label } });
+    return WC.config(S.strictness, { output: { check_label: S.app === "lightroom" ? WC.ADOBE.lightroom.label : WC.ADOBE.bridge.label },
+      bursts: { keep: S.keep } });
   }
+  function setKeep(v, rerender = true) {
+    S.keep = Math.max(1, Math.min(5, Number(v) || 1)); store.set("keep", S.keep);
+    for (const el of document.querySelectorAll(".keepSeg")) for (const b of el.querySelectorAll("button")) {
+      b.classList.toggle("on", b.dataset.v === String(S.keep)); b.setAttribute("aria-checked", String(b.dataset.v === String(S.keep))); }
+    if (rerender && S.results.length) { decide(); render(); toast(tr(`Keeping the ${S.keep} best of each burst`, `연사마다 베스트 ${S.keep}장을 남겨요`)); }
+  }
+  const keepSegHtml = () => `<span class="seg keepSeg" role="radiogroup">${[1, 2, 3, 4, 5].map((n) => `<button data-v="${n}">${n}</button>`).join("")}</span>`;
   function decide() {
     const feats = S.entries.map((e) => S.feats.get(e.id)).filter(Boolean);
     S.results = WC.decideAll(feats, cfgNow(), S.overrides);
@@ -329,14 +420,14 @@
     const mid = $("barMid");
     if (screen !== "review") { mid.innerHTML = ""; return; }
     mid.innerHTML = `<span class="fname" title="${esc(S.rootName)}">${esc(S.rootName)}</span>
-      <span class="seg" id="strictBar"><button data-v="gentle">Gentle</button><button data-v="normal">Normal</button><button data-v="strict">Strict</button></span>
+      <span class="seg" id="strictBar">${["gentle", "normal", "strict"].map((v) => `<button data-v="${v}">${strictName(v)}</button>`).join("")}</span>
       <span class="seg" id="appBar"><button data-v="lightroom">Lightroom</button><button data-v="bridge">Bridge + PS</button></span>
       <span class="topctl">
-        ${S.root ? '<button class="btn primary" id="saveBtn">Save to folder</button>' : ""}
-        <button class="btn${S.root ? "" : " primary"}" id="zipBtn">Download XMP (ZIP)</button>
-        <button class="linkbtn" id="newBtn" title="Choose another folder">New folder</button>
+        ${S.root ? `<button class="btn primary" id="saveBtn">${tr("Save to folder", "폴더에 저장")}</button>` : ""}
+        <button class="btn${S.root ? "" : " primary"}" id="zipBtn">${tr("Download XMP (ZIP)", "XMP 내려받기 (ZIP)")}</button>
+        <button class="linkbtn" id="newBtn" title="${tr("Choose another folder", "다른 폴더 고르기")}">${tr("New folder", "새 폴더")}</button>
       </span>`;
-    seg($("strictBar"), S.strictness, (v) => { S.strictness = v; store.set("strictness", v); decide(); render(); toast(`Strictness: ${v}`); });
+    seg($("strictBar"), S.strictness, (v) => { S.strictness = v; store.set("strictness", v); decide(); render(); toast(tr(`Strictness: ${strictName(v)}`, `기준: ${strictName(v)}`)); });
     seg($("appBar"), S.app, (v) => { S.app = v; store.set("app", v); decide(); render(); });
     if (S.root) $("saveBtn").onclick = saveToFolder;
     $("zipBtn").onclick = downloadZip;
@@ -369,16 +460,18 @@
     const nRej = count(g.reject), nChk = count(g.check);
     const side = $("side");
     const link = (v, label, n, dot, sub) => `<a data-v="${v}" class="${S.view === v ? "on" : ""}${sub ? " sub" : ""}"><em>${dot ? `<i class="dot ${dot}"></i>` : ""}${esc(label)}</em>${n === null ? "" : `<span>${n.toLocaleString()}</span>`}</a>`;
-    let h = link("overview", "Overview", S.results.length);
-    h += `<h4>Flagged</h4>` + link("reject", "Rejects", nRej, "reject");
-    for (const [k, l] of g.reject) if (l.length) h += link(`reject:${k}`, WC.LABELS[k], l.length, null, true);
-    h += link("check", "To check", nChk, "check");
-    for (const [k, l] of g.check) if (l.length) h += link(`check:${k}`, WC.LABELS[k], l.length, null, true);
-    h += `<h4>Everything else</h4>` + link("bursts", "Bursts", g.bursts.size, "best") + link("kept", "Kept", g.kept.length, "ok");
-    if (g.errors.length) h += link("errors", "Could not read", g.errors.length);
-    h += `<h4>Open in</h4>` + link("apps", "Lightroom · Bridge · Photoshop", null);
+    let h = link("overview", tr("Overview", "요약"), S.results.length);
+    h += `<h4>${tr("Flagged", "골라낸 사진")}</h4>` + link("reject", tr("Rejects", "제외"), nRej, "reject");
+    for (const [k, l] of g.reject) if (l.length) h += link(`reject:${k}`, label(k), l.length, null, true);
+    h += link("check", tr("To check", "확인 필요"), nChk, "check");
+    for (const [k, l] of g.check) if (l.length) h += link(`check:${k}`, label(k), l.length, null, true);
+    h += `<h4>${tr("Everything else", "나머지")}</h4>` + link("bursts", tr("Bursts", "연사"), g.bursts.size, "best") + link("kept", tr("Kept", "남김"), g.kept.length, "ok");
+    if (g.errors.length) h += link("errors", tr("Could not read", "읽을 수 없음"), g.errors.length);
+    h += `<h4>${tr("Open in", "열기")}</h4>` + link("apps", "Lightroom · Bridge · Photoshop", null);
+    h += `<label class="chk details"><input type="checkbox" id="detailsChk" ${S.details ? "checked" : ""}> ${tr("Show technical details", "자세한 수치 보기")}</label>`;
     side.innerHTML = h;
     for (const a of side.querySelectorAll("a")) a.onclick = () => { S.view = a.dataset.v; S.sel.clear(); render(); window.scrollTo(0, 0); };
+    side.querySelector("#detailsChk").onchange = (e) => { S.details = e.target.checked; store.set("details", S.details); render(); if (!$("lb").hidden) lbRender(); };
     return g;
   }
 
@@ -388,80 +481,110 @@
     if (v === "overview") c.innerHTML = overviewHtml(g, nRej, nChk);
     else if (v === "apps") c.innerHTML = appsHtml();
     else if (v === "bursts") c.innerHTML = burstsHtml(g);
-    else if (v === "kept") c.innerHTML = section("Kept", g.kept, "Photos with no problem found. Best frames of bursts are starred.");
-    else if (v === "errors") c.innerHTML = section("Could not read", g.errors, "These files could not be decoded (damaged, or a RAW without an embedded preview).");
+    else if (v === "kept") c.innerHTML = section(tr("Kept", "남김"), g.kept, tr("Photos with no problem found. Best frames of bursts are starred.", "문제가 없는 사진이에요. 연사의 베스트 컷에는 별이 붙어요."));
+    else if (v === "errors") c.innerHTML = section(tr("Could not read", "읽을 수 없음"), g.errors, tr("These files could not be decoded (damaged, or a RAW without an embedded preview).", "열 수 없는 파일이에요 (손상됐거나, 내장 미리보기가 없는 RAW)."));
     else {
       const [st, k] = v.split(":");
       const m = g[st];
-      const title = st === "reject" ? "Rejects" : "To check";
-      if (k) c.innerHTML = section(`${title} · ${WC.LABELS[k]}`, m.get(k) || []);
+      const title = st === "reject" ? tr("Rejects", "제외") : tr("To check", "확인 필요");
+      if (k) c.innerHTML = section(`${title} · ${label(k)}`, m.get(k) || []);
       else {
+        const keys = tr("Press <b>K</b> keep · <b>R</b> reject · <b>C</b> check · <b>U</b> undo · <b>Enter</b> full size.", "<b>K</b> 남김 · <b>R</b> 제외 · <b>C</b> 확인 · <b>U</b> 되돌리기 · <b>Enter</b> 크게 보기");
+        const what = st === "reject" ? tr("Marked Reject in Lightroom / Bridge.", "Lightroom / Bridge에서 제외(Reject)로 표시돼요. 원본 파일은 그대로예요.")
+          : tr(`Get the yellow label (“${esc(cfgNow().output.check_label)}”).`, `노란 라벨(“${esc(cfgNow().output.check_label)}”)이 붙어요.`);
         let x = `<div class="sec"><h2>${title}</h2><span>${(st === "reject" ? nRej : nChk).toLocaleString()}</span></div>
-          <p class="hint">${st === "reject" ? "Marked Reject in Lightroom / Bridge." : `Get the yellow label (“${esc(cfgNow().output.check_label)}”).`} Press <b>K</b> keep · <b>R</b> reject · <b>C</b> check · <b>U</b> undo · <b>Enter</b> full size.</p>`;
-        for (const [kk, l] of m) if (l.length) x += section(WC.LABELS[kk], l, null, true);
-        if (!(st === "reject" ? nRej : nChk)) x += `<p class="empty">Nothing here.</p>`;
+          <p class="hint">${what} ${keys}</p>`;
+        for (const [kk, l] of m) if (l.length) x += section(label(kk), l, null, true);
+        if (!(st === "reject" ? nRej : nChk)) x += `<p class="empty">${tr("Nothing here.", "없어요.")}</p>`;
         c.innerHTML = x;
       }
     }
     wireCards(c);
     wireApps(c);
+    for (const el of c.querySelectorAll(".keepSeg")) seg(el, String(S.keep), (v) => setKeep(v));
   }
 
   function overviewHtml(g, nRej, nChk) {
     const st = S.stats || {};
     const alt = S.results.filter((r) => r.role === "alternate").length;
-    const speed = st.analysed ? `${plural(st.analysed, "photo")} analysed in ${fmtTime(st.seconds)}${st.cached ? `, ${st.cached.toLocaleString()} from the last run` : ""}` : `${plural(st.cached || 0, "photo")} from the last run`;
-    let h = `<div class="sec"><h2>${esc(S.rootName)}</h2><span>${speed} · strictness ${S.strictness}</span></div>
+    const speed = st.analysed ? tr(`${plural(st.analysed, "photo")} analysed in ${fmtTime(st.seconds)}${st.cached ? `, ${st.cached.toLocaleString()} from the last run` : ""}`,
+      `${st.analysed.toLocaleString()}장을 ${fmtTime(st.seconds)}에 분석${st.cached ? `, ${st.cached.toLocaleString()}장은 지난번 결과` : ""}`)
+      : tr(`${plural(st.cached || 0, "photo")} from the last run`, `${(st.cached || 0).toLocaleString()}장 모두 지난번 결과`);
+    let h = `<div class="sec"><h2>${esc(S.rootName)}</h2><span>${speed} · ${tr("strictness", "기준")} ${strictName(S.strictness)}</span></div>
       <div class="summary">
-        <div class="tile"><b>${S.results.length.toLocaleString()}</b><span>photos</span></div>
-        <div class="tile reject"><b>${nRej.toLocaleString()}</b><span>rejects</span></div>
-        <div class="tile check"><b>${nChk.toLocaleString()}</b><span>to check</span></div>
-        <div class="tile best"><b>${g.bursts.size.toLocaleString()}</b><span>bursts · ${alt.toLocaleString()} alternates</span></div>
-        <div class="tile"><b>${(S.results.length - nRej).toLocaleString()}</b><span>keepers</span></div>
+        <div class="tile"><b>${S.results.length.toLocaleString()}</b><span>${tr("photos", "전체")}</span></div>
+        <div class="tile reject"><b>${nRej.toLocaleString()}</b><span>${tr("rejects", "제외")}</span></div>
+        <div class="tile check"><b>${nChk.toLocaleString()}</b><span>${tr("to check", "확인 필요")}</span></div>
+        <div class="tile best"><b>${g.bursts.size.toLocaleString()}</b><span>${tr(`bursts · ${alt.toLocaleString()} alternates`, `연사 · 다른 컷 ${alt.toLocaleString()}장`)}</span></div>
+        <div class="tile"><b>${(S.results.length - nRej).toLocaleString()}</b><span>${tr("keepers", "남길 사진")}</span></div>
       </div>`;
-    if (S.faceError) h += `<p class="hint">⚠️ Face and closed-eye checks are off in this browser (no WebGL): ${esc(S.faceError)}. Blur, exposure and bursts still work.</p>`;
-    const rows = WC.CHECKS.map((k) => `<tr><td><i class="dot reject"></i>${esc(WC.LABELS[k])}</td><td>${(g.reject.get(k) || []).length}</td><td>${(g.check.get(k) || []).length}</td></tr>`).join("");
-    h += `<div class="apps" style="margin-bottom:18px"><div class="app"><h3>Flagged by reason</h3>
-      <table style="width:100%;font-size:14px;border-collapse:collapse;margin-top:6px"><tr style="color:var(--muted);text-align:left"><th></th><th>reject</th><th>check</th></tr>${rows}</table></div>
-      <div class="app"><h3>Next</h3><ol><li>Look through <b>Rejects</b> and <b>To check</b>; fix any wrong call with K / R / C.</li>
-      <li>${S.root ? "<b>Save to folder</b> writes ratings, labels and keywords (XMP)." : "<b>Download XMP (ZIP)</b> and unzip it into the event folder."}</li>
-      <li>Open the folder in <b>${S.app === "lightroom" ? "Lightroom Classic" : "Bridge / Photoshop"}</b> (steps under <a href="#" data-go="apps">Open in</a>).</li></ol></div></div>`;
+    if (S.faceError) h += `<p class="hint">⚠️ ${tr(`Face and closed-eye checks are off in this browser (no WebGL): ${esc(S.faceError)}. Blur, exposure and bursts still work.`, `이 브라우저에서는 얼굴·눈 감음 검사가 꺼져 있어요 (WebGL 없음): ${esc(S.faceError)}. 흔들림, 밝기, 연사는 그대로 돼요.`)}</p>`;
+    const rows = WC.CHECKS.map((k) => `<tr><td><i class="dot reject"></i>${esc(label(k))}</td><td>${(g.reject.get(k) || []).length}</td><td>${(g.check.get(k) || []).length}</td></tr>`).join("");
+    h += `<div class="apps" style="margin-bottom:18px"><div class="app"><h3>${tr("Flagged by reason", "이유별")}</h3>
+      <table style="width:100%;font-size:14px;border-collapse:collapse;margin-top:6px"><tr style="color:var(--muted);text-align:left"><th></th><th>${tr("reject", "제외")}</th><th>${tr("check", "확인")}</th></tr>${rows}</table></div>
+      <div class="app"><h3>${tr("Next", "다음 단계")}</h3><ol><li>${tr("Look through <b>Rejects</b> and <b>To check</b>; fix any wrong call with K / R / C.", "<b>제외</b>와 <b>확인 필요</b>를 훑어보고, 잘못 고른 건 K / R / C로 고치세요.")}</li>
+      <li>${S.root ? tr("<b>Save to folder</b> writes ratings, labels and keywords (XMP).", "<b>폴더에 저장</b>을 누르면 별점·라벨·키워드(XMP)가 기록돼요.") : tr("<b>Download XMP (ZIP)</b> and unzip it into the event folder.", "<b>XMP 내려받기 (ZIP)</b> 후 행사 폴더에 압축을 푸세요.")}</li>
+      <li>${tr(`Open the folder in <b>${S.app === "lightroom" ? "Lightroom Classic" : "Bridge / Photoshop"}</b> (steps under <a href="#" data-go="apps">Open in</a>).`, `<b>${S.app === "lightroom" ? "Lightroom Classic" : "Bridge / Photoshop"}</b>에서 폴더를 여세요 (방법은 <a href="#" data-go="apps">열기</a>).`)}</li></ol></div></div>`;
     const preview = S.results.filter((r) => r.status === "reject" || r.status === "check").slice(0, 24);
-    if (preview.length) h += section("Flagged photos", preview, "The first flagged photos. All of them are under Rejects and To check.");
+    if (preview.length) h += section(tr("Flagged photos", "골라낸 사진"), preview, tr("The first flagged photos. All of them are under Rejects and To check.", "골라낸 사진 중 일부예요. 전부 보려면 제외와 확인 필요를 누르세요."));
     return h;
   }
 
   function section(title, list, hint, sub) {
-    if (!list.length) return `<div class="sec"><h2>${esc(title)}</h2></div><p class="empty">Nothing here.</p>`;
+    if (!list.length) return `<div class="sec"><h2>${esc(title)}</h2></div><p class="empty">${tr("Nothing here.", "없어요.")}</p>`;
     return `<div class="sec"><h${sub ? 3 : 2} style="${sub ? "font:600 18px var(--serif);margin:0" : ""}">${esc(title)}</h${sub ? 3 : 2}><span>${list.length.toLocaleString()}</span></div>
       ${hint ? `<p class="hint">${esc(hint)}</p>` : ""}<div class="grid">${list.map(cardHtml).join("")}</div>`;
   }
 
   function cardHtml(r) {
     const url = S.thumbs.get(r.id) || "";
-    const why = r.status === "error" ? r.error : (r.primary && r.verdicts[r.primary][2]) || (r.reasons || []).map((k) => r.verdicts[k][2]).filter(Boolean)[0] || (r.role === "best" ? "Best frame of its burst" : r.role === "alternate" ? "Alternate of a burst" : "No problem found");
+    const flagged = r.status === "error" ? r.error : (S.details ? technical(r) : plain(r, whyKey(r))) || technical(r);
+    const why = flagged || (r.role === "best" ? tr("Best frame of its burst", "연사 중 베스트 컷") : r.role === "alternate" ? tr("Alternate of a burst", "연사 중 다른 컷") : tr("No problem found", "문제 없음"));
     const stars = r.status !== "reject" && (r.role === "best" || r.role === "single") ? "★★★" : "";
-    const pill = r.status === "reject" ? "Reject" : r.status === "check" ? "Check" : r.status === "ok" ? "" : "";
+    const pill = r.status === "reject" || r.status === "check" ? statusName(r.status) : "";
     const dec = r.override;
     return `<div class="card${r.status === "reject" ? " dim" : ""}${r.role === "best" ? " best" : ""}${S.sel.has(r.id) ? " sel" : ""}" tabindex="0" data-id="${r.id}">
-      <div class="im">${url ? `<img src="${url}" alt="${esc(r.name)}" loading="lazy">` : ""}${pill ? `<span class="pill ${r.status}">${pill}</span>` : ""}${stars ? `<span class="star">${stars}</span>` : ""}${dec ? `<span class="ov">you: ${dec}</span>` : ""}</div>
+      <div class="im">${url ? `<img src="${url}" alt="${esc(r.name)}" loading="lazy">` : ""}${pill ? `<span class="pill ${r.status}">${pill}</span>` : ""}${stars ? `<span class="star">${stars}</span>` : ""}${dec ? `<span class="ov">${tr("you", "직접")}: ${decName(dec)}</span>` : ""}</div>
       <div class="meta"><div class="nm" title="${esc(r.name)}">${esc(r.name)}</div><div class="why">${esc(why)}</div>
-      ${r.status === "error" ? "" : `<div class="acts"><button data-d="keep" class="${dec === "keep" ? "on" : ""}" title="Keep (K)">Keep</button><button data-d="reject" class="${dec === "reject" ? "on" : ""}" title="Reject (R)">Reject</button><button data-d="check" class="${dec === "check" ? "on" : ""}" title="Check (C)">Check</button></div>`}</div></div>`;
+      ${r.status === "error" ? "" : `<div class="acts"><button data-d="keep" class="${dec === "keep" ? "on" : ""}" title="${decName("keep")} (K)">${decName("keep")}</button><button data-d="reject" class="${dec === "reject" ? "on" : ""}" title="${decName("reject")} (R)">${decName("reject")}</button><button data-d="check" class="${dec === "check" ? "on" : ""}" title="${decName("check")} (C)">${decName("check")}</button></div>`}</div></div>`;
   }
 
   function burstsHtml(g) {
-    if (!g.bursts.size) return `<div class="sec"><h2>Bursts</h2></div><p class="empty">No bursts found (photos taken within a couple of seconds that look alike).</p>`;
-    let h = `<div class="sec"><h2>Bursts</h2><span>${g.bursts.size.toLocaleString()}</span></div><p class="hint">Frames taken seconds apart that look alike. The best one (sharpest, eyes open, best exposure) is outlined and gets ★★★; the others are alternates.</p>`;
+    const ctl = `<div class="keepctl"><span>${tr("Keep the best", "연사마다 베스트")}</span>${keepSegHtml()}<span>${tr("of each burst", "장 남기기")}</span></div>`;
+    if (!g.bursts.size) return `<div class="sec"><h2>${tr("Bursts", "연사")}</h2></div>${ctl}<p class="empty">${tr("No bursts found (photos taken within a couple of seconds that look alike).", "연사가 없어요 (몇 초 안에 찍은 비슷한 사진).")}</p>`;
+    const nb = S.keep === 1 ? tr("The best one (sharpest, eyes open, best exposure) is outlined and gets ★★★; the others are alternates.", "가장 좋은 컷(가장 선명하고, 눈을 뜨고, 밝기가 좋은 컷)에 테두리와 ★★★가 붙고, 나머지는 다른 컷이 돼요.")
+      : tr(`The ${S.keep} best (sharpest, eyes open, best exposure) are outlined and get ★★★; the others are alternates.`, `가장 좋은 ${S.keep}장(가장 선명하고, 눈을 뜨고, 밝기가 좋은 컷)에 테두리와 ★★★가 붙고, 나머지는 다른 컷이 돼요.`);
+    let h = `<div class="sec"><h2>${tr("Bursts", "연사")}</h2><span>${g.bursts.size.toLocaleString()}</span></div>${ctl}<p class="hint">${tr("Frames taken seconds apart that look alike.", "몇 초 간격으로 찍은 비슷한 사진이에요.")} ${nb}</p>`;
     for (const [b, list] of g.bursts) {
-      const best = list.find((r) => r.role === "best");
-      h += `<div class="burst"><header><span>Burst ${b} · ${list.length} frames</span><span>best: ${esc(best ? best.name : "-")}</span></header><div class="grid">${list.map(cardHtml).join("")}</div></div>`;
+      const best = list.filter((r) => r.role === "best").map((r) => r.name);
+      h += `<div class="burst"><header><span>${tr(`Burst ${b} · ${list.length} frames`, `연사 ${b} · ${list.length}장`)}</span><span>${tr("best", "베스트")}: ${esc(best.length ? best.join(", ") : "-")}</span></header><div class="grid">${list.map(cardHtml).join("")}</div></div>`;
     }
     return h;
   }
 
   function appsHtml() {
     const lab = cfgNow().output.check_label;
-    const saved = S.root ? "Click <b>Save to folder</b> (top right)." : "Click <b>Download XMP (ZIP)</b> and unzip it into the event folder, next to the photos (RAW files only: for JPEGs open Wedding Cull in Chrome or Edge).";
+    const saved = S.root ? tr("Click <b>Save to folder</b> (top right).", "오른쪽 위 <b>폴더에 저장</b>을 누르세요.")
+      : tr("Click <b>Download XMP (ZIP)</b> and unzip it into the event folder, next to the photos (RAW files only: for JPEGs open Wedding Cull in Chrome or Edge).",
+        "<b>XMP 내려받기 (ZIP)</b>를 누르고 행사 폴더의 사진 옆에 압축을 푸세요 (RAW만 해당: JPEG는 Chrome이나 Edge에서 Wedding Cull을 여세요).");
+    if (S.lang === "ko") return `<div class="sec"><h2>Lightroom, Bridge, Photoshop에서 열기</h2></div>
+      <p class="hint">Wedding Cull은 표준 XMP 메타데이터를 기록해요: 제외 사진은 <b>Reject</b>(별점 −1), 확인할 사진은 노란 라벨 “${esc(lab)}”, 연사의 베스트 컷과 좋은 단독 컷은 ★★★, 그리고 <code>Culling|Blur / camera shake</code> 같은 키워드. ${S.root ? "JPEG는 파일 안에(사진 데이터는 그대로), RAW는 옆에 .xmp 사이드카로." : ".xmp 사이드카로."} 메뉴 이름은 영문 기준이에요.</p>
+      <div class="apps">
+        <div class="app"><h3><span class="badge lr">Lr</span>Lightroom Classic</h3><ol>
+          <li>${saved}${S.app !== "lightroom" ? ' 먼저 위쪽 막대를 <b>Lightroom</b>으로 바꾸세요 (노란 라벨 = “Yellow”).' : ""}</li>
+          <li><b>File → Import</b>로 폴더를 가져오거나, 이미 카탈로그에 있으면 사진을 고르고 <b>Metadata → Read Metadata from Files</b>.</li>
+          <li><b>Attribute</b> 필터 막대로 <b>Rejected</b>, <b>★★★</b>, <b>노란</b> 라벨을 거르거나, <b>Keyword</b> 열에서 “Culling”을 고르세요.</li></ol></div>
+        <div class="app"><h3><span class="badge br">Br</span>Adobe Bridge</h3><ol>
+          <li>${saved}${S.app !== "bridge" ? ' 먼저 위쪽 막대를 <b>Bridge + PS</b>로 바꾸세요 (노란 라벨 = “Second”).' : ""}</li>
+          <li>Bridge에서 폴더를 여세요 (이미 열려 있었다면 <b>View → Refresh</b>).</li>
+          <li><b>Filter</b> 패널: <b>Ratings → Reject</b>, <b>★★★</b>, <b>Labels → ${esc(lab)}</b>, <b>Keywords → Culling</b>.</li></ol></div>
+        <div class="app"><h3><span class="badge ps">Ps</span>Photoshop</h3><ol>
+          <li>${S.root ? "<b>폴더에 저장</b>하면 <code>_cull/</code> 안에 스크립트 두 개도 만들어져요." : "아래에서 스크립트를 내려받아 행사 폴더의 <code>_cull</code> 폴더에 넣으세요 (다른 곳에 두면 폴더를 물어봐요)."}</li>
+          <li>Photoshop에서 <b>File → Scripts → Browse…</b>를 누르고 <code>Open keepers in Photoshop.jsx</code>(남길 사진) 또는 <code>Open photos to check in Photoshop.jsx</code>(확인할 사진)를 고르세요. RAW는 Camera Raw로 열려요.</li>
+          <li>또는 Bridge에서 사진을 고르고 <b>File → Open With → Photoshop</b>.</li></ol>
+          <div class="topctl"><button class="btn" data-ps="keepers">남길 사진 스크립트</button><button class="btn" data-ps="check">확인할 사진 스크립트</button></div></div>
+      </div>
+      <p class="hint" style="margin-top:14px">데스크톱 Wedding Cull용 결정 파일: <button class="btn" id="ovBtn">overrides.csv</button> <button class="btn" id="csvBtn">results.csv</button></p>`;
     return `<div class="sec"><h2>Open in Lightroom, Bridge or Photoshop</h2></div>
       <p class="hint">Wedding Cull writes standard XMP metadata: <b>Reject</b> (rating −1) for rejects, the yellow label “${esc(lab)}” for photos to check, ★★★ for the best frame of each burst and for good single shots, and keywords such as <code>Culling|Blur / camera shake</code>. ${S.root ? "Inside JPEGs (image data untouched) and in .xmp sidecars next to RAW files." : "As .xmp sidecars."}</p>
       <div class="apps">
@@ -604,20 +727,21 @@
     }
     const f = r.f || {}, m = f.meta || {};
     const v = r.verdicts || {};
-    const lines = WC.CHECKS.map((k) => { const x = v[k] || ["ok", 0, ""]; return `<div><i class="dot ${x[0]}"></i></div><div><b>${esc(WC.LABELS[k])}</b>${x[2] ? `<br><span style="color:#a39887">${esc(x[2])}</span>` : ""}</div>`; }).join("");
+    const lines = WC.CHECKS.map((k) => { const x = v[k] || ["ok", 0, ""]; const p = plain(r, k);
+      return `<div><i class="dot ${x[0]}"></i></div><div><b>${esc(label(k))}</b>${p ? `<br>${esc(p)}` : ""}${S.details && x[2] ? `<br><span style="color:#a39887">${esc(x[2])}</span>` : ""}</div>`; }).join("");
     const burst = r.burst_size > 1 ? S.results.filter((x) => x.burst === r.burst) : [];
     const dec = r.override;
     $("lbSide").innerHTML = `<h3>${esc(r.name)}</h3>
-      <div>${r.status === "error" ? esc(r.error) : `<span class="pill ${r.status}" style="position:static;display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;color:#fff;text-transform:uppercase">${r.status === "ok" ? "Keep" : r.status}</span> ${r.role === "best" ? "· best of burst ★★★" : r.role === "alternate" ? "· alternate" : ""}`}</div>
-      <div class="acts"><button data-d="keep" class="${dec === "keep" ? "on" : ""}">Keep K</button><button data-d="reject" class="${dec === "reject" ? "on" : ""}">Reject R</button><button data-d="check" class="${dec === "check" ? "on" : ""}">Check C</button></div>
+      <div>${r.status === "error" ? esc(r.error) : `<span class="pill ${r.status}" style="position:static;display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;color:#fff;text-transform:uppercase">${statusName(r.status)}</span> ${r.role === "best" ? tr("· best of burst ★★★", "· 연사 베스트 ★★★") : r.role === "alternate" ? tr("· alternate", "· 연사 중 다른 컷") : ""}`}</div>
+      <div class="acts"><button data-d="keep" class="${dec === "keep" ? "on" : ""}">${decName("keep")} K</button><button data-d="reject" class="${dec === "reject" ? "on" : ""}">${decName("reject")} R</button><button data-d="check" class="${dec === "check" ? "on" : ""}">${decName("check")} C</button></div>
       <div class="v">${lines}</div>
-      ${burst.length ? `<div style="font-size:13px;margin-bottom:4px">Burst of ${burst.length}</div><div class="strip">${burst.map((x) => `<img src="${S.thumbs.get(x.id) || ""}" data-id="${x.id}" class="${x.id === r.id ? "cur" : ""} ${x.role === "best" ? "best" : ""}" title="${esc(x.name)}">`).join("")}</div>` : ""}
-      <div style="font-size:12.5px;color:#a39887;margin-top:14px;line-height:1.7">
+      ${burst.length ? `<div style="font-size:13px;margin-bottom:4px">${tr(`Burst of ${burst.length}`, `연사 ${burst.length}장`)}</div><div class="strip">${burst.map((x) => `<img src="${S.thumbs.get(x.id) || ""}" data-id="${x.id}" class="${x.id === r.id ? "cur" : ""} ${x.role === "best" ? "best" : ""}" title="${esc(x.name)}">`).join("")}</div>` : ""}
+      ${S.details ? `<div style="font-size:12.5px;color:#a39887;margin-top:14px;line-height:1.7">
         Subject sharpness ${r.sharp ?? "-"} (${esc(r.sharp_src || "")}) · faces ${r.n_faces ?? 0}${r.max_blink != null ? ` · blink ${r.max_blink}` : ""}<br>
         Median brightness ${f.median ?? "-"} · clipped ${f.clip_hi != null ? (f.clip_hi * 100).toFixed(1) + "%" : "-"}<br>
         ${m.time_text ? esc(m.time_text.replace("T", " ")) + " · " : ""}${m.iso ? "ISO " + m.iso + " · " : ""}${m.exposure_time ? (m.exposure_time < 1 ? "1/" + Math.round(1 / m.exposure_time) : m.exposure_time) + " s · " : ""}${m.fnumber ? "f/" + m.fnumber : ""}${m.ec ? " · EC " + (m.ec > 0 ? "+" : "") + m.ec.toFixed(1) : ""}
-      </div>
-      <p class="keys">← → next · K keep · R reject · C check · U undo · Esc close</p>`;
+      </div>` : ""}
+      <p class="keys">${tr("← → next · K keep · R reject · C check · U undo · Esc close", "← → 다음 · K 남김 · R 제외 · C 확인 · U 되돌리기 · Esc 닫기")}</p>`;
     for (const b of $("lbSide").querySelectorAll("button[data-d]")) b.onclick = () => setDecision([r.id], b.classList.contains("on") ? null : b.dataset.d);
     for (const t of $("lbSide").querySelectorAll(".strip img")) t.onclick = () => { LB.id = t.dataset.id; if (!LB.list.includes(LB.id)) LB.list.push(LB.id); lbRender(); };
   }
@@ -648,7 +772,7 @@
   async function saveToFolder() {
     let perm;
     try { perm = await S.root.requestPermission({ mode: "readwrite" }); } catch (e) { perm = "denied"; }
-    if (perm !== "granted") { toast("Wedding Cull needs permission to write into the folder. Nothing was changed."); return; }
+    if (perm !== "granted") { toast(tr("Wedding Cull needs permission to write into the folder. Nothing was changed.", "폴더에 쓰려면 권한이 필요해요. 아무것도 바뀌지 않았어요.")); return; }
     const todo = S.results.filter(writable);
     let nEmbed = 0, nNew = 0, nUpd = 0;
     for (const r of todo) {
@@ -656,12 +780,21 @@
       if (!e.isRaw && S.embed) nEmbed++;
       else if (e.sidecar) nUpd++; else nNew++;
     }
-    const box = modal(`<h3>Save to “${esc(S.rootName)}”?</h3><ul>
+    const appName = S.app === "lightroom" ? "Lightroom Classic" : "Adobe Bridge";
+    const box = S.lang === "ko" ? modal(`<h3>“${esc(S.rootName)}”에 저장할까요?</h3><ul>
+      ${nEmbed ? `<li><b>JPEG ${nEmbed.toLocaleString()}장 안에</b> 별점·라벨·키워드를 기록해요. 메타데이터만 바뀌고 사진 데이터는 그대로예요. 기존 XMP는 <code>_cull/xmp_backup/</code>에 백업해요.</li>` : ""}
+      ${nNew ? `<li>RAW 파일 옆에 <b>.xmp 사이드카 ${nNew.toLocaleString()}개</b>를 만들어요.</li>` : ""}
+      ${nUpd ? `<li><b>기존 사이드카 ${nUpd.toLocaleString()}개</b>를 고쳐요 (별점, 라벨, Culling 키워드만. Camera Raw 보정은 그대로, 먼저 백업).</li>` : ""}
+      <li><code>_cull/results.csv</code>, <code>_cull/overrides.csv</code>, Photoshop 스크립트 두 개.</li></ul>
+      <p class="muted">“확인 필요” 라벨: <b>${esc(cfgNow().output.check_label)}</b> (${appName}). 사진은 옮기지 않고 원본 그대로 둬요.</p>
+      <label class="chk muted" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="embedChk" ${S.embed ? "checked" : ""}> JPEG 안에 기록 (Lightroom과 Bridge는 JPEG 별점을 파일 안에서만 읽어요)</label>
+      <div class="row"><button class="btn" id="mCancel">취소</button><button class="btn primary" id="mGo">${todo.length.toLocaleString()}장 저장</button></div>`)
+      : modal(`<h3>Save to “${esc(S.rootName)}”?</h3><ul>
       ${nEmbed ? `<li>Write ratings, labels and keywords <b>inside ${nEmbed.toLocaleString()} JPEGs</b>: metadata only, the image data is not touched. Their previous XMP is backed up to <code>_cull/xmp_backup/</code>.</li>` : ""}
       ${nNew ? `<li>Create <b>${nNew.toLocaleString()} .xmp sidecars</b> next to RAW files.</li>` : ""}
       ${nUpd ? `<li>Update <b>${nUpd.toLocaleString()} existing sidecars</b> (only rating, label and Culling keywords; Camera Raw edits stay; backed up first).</li>` : ""}
       <li><code>_cull/results.csv</code>, <code>_cull/overrides.csv</code> and two Photoshop scripts.</li></ul>
-      <p class="muted">Label for “to check”: <b>${esc(cfgNow().output.check_label)}</b> (${S.app === "lightroom" ? "Lightroom Classic" : "Adobe Bridge"}). No photo is moved or deleted.</p>
+      <p class="muted">Label for “to check”: <b>${esc(cfgNow().output.check_label)}</b> (${appName}). No photo is moved or deleted.</p>
       <label class="chk muted" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="embedChk" ${S.embed ? "checked" : ""}> Write inside JPEGs (Lightroom and Bridge read JPEG ratings only from inside the file)</label>
       <div class="row"><button class="btn" id="mCancel">Cancel</button><button class="btn primary" id="mGo">Save ${todo.length.toLocaleString()} photos</button></div>`);
     box.querySelector("#embedChk").onchange = (ev) => { S.embed = ev.target.checked; closeModal(); saveToFolder(); };
@@ -670,7 +803,7 @@
   }
 
   async function doSave(todo) {
-    const box = modal(`<h3>Saving…</h3><div class="meter"><i id="saveBar"></i></div><p class="muted" id="saveTxt"></p>`);
+    const box = modal(`<h3>${tr("Saving…", "저장 중…")}</h3><div class="meter"><i id="saveBar"></i></div><p class="muted" id="saveTxt"></p>`);
     const cull = await S.root.getDirectoryHandle("_cull", { create: true });
     const backup = await cull.getDirectoryHandle("xmp_backup", { create: true });
     const counts = { embedded: 0, unchanged: 0, created: 0, updated: 0, retired: 0, failed: [] };
@@ -711,7 +844,7 @@
         }
       } catch (err) { counts.failed.push(`${e.rel}: ${err.message || err}`); }
       i++;
-      if (i % 5 === 0 || i === todo.length) { box.querySelector("#saveBar").style.width = `${(100 * i) / todo.length}%`; box.querySelector("#saveTxt").textContent = `${i.toLocaleString()} of ${todo.length.toLocaleString()}`; }
+      if (i % 5 === 0 || i === todo.length) { box.querySelector("#saveBar").style.width = `${(100 * i) / todo.length}%`; box.querySelector("#saveTxt").textContent = tr(`${i.toLocaleString()} of ${todo.length.toLocaleString()}`, `${i.toLocaleString()} / ${todo.length.toLocaleString()}장`); }
     }
     await writeFile(cull, "results.csv", WC.csvRows(S.results));
     await writeFile(cull, "overrides.csv", WC.overridesCsv(S.overrides));
@@ -725,16 +858,16 @@
         if (key !== e.key) { const c = await DB.get("feat", e.key); if (c) await DB.put("feat", key, c); e.key = key; } } catch { /* ignore */ }
     }
     const lab = cfgNow().output.check_label;
-    const b2 = modal(`<h3>Saved</h3><ul>
-      ${counts.embedded ? `<li><b>${counts.embedded.toLocaleString()}</b> JPEGs updated (metadata only)</li>` : ""}
-      ${counts.unchanged ? `<li>${counts.unchanged.toLocaleString()} JPEGs already up to date</li>` : ""}
-      ${counts.created ? `<li><b>${counts.created.toLocaleString()}</b> sidecars created</li>` : ""}
-      ${counts.updated ? `<li><b>${counts.updated.toLocaleString()}</b> sidecars updated</li>` : ""}
-      ${counts.retired ? `<li>${counts.retired.toLocaleString()} old Wedding Cull sidecars of JPEGs moved to <code>_cull/xmp_backup/old_sidecars/</code></li>` : ""}
-      <li><code>_cull/</code>: results.csv, overrides.csv, Photoshop scripts</li>
-      ${counts.failed.length ? `<li style="color:var(--reject)"><b>${counts.failed.length}</b> failed: ${counts.failed.slice(0, 5).map(esc).join("; ")}</li>` : ""}</ul>
-      <p class="muted">${S.app === "lightroom" ? "Lightroom Classic: select the photos → <b>Metadata → Read Metadata from Files</b>." : `Bridge: <b>View → Refresh</b>, then Filter by Reject / ★★★ / “${esc(lab)}”.`}</p>
-      <div class="row"><button class="btn" id="mApps">All steps</button><button class="btn primary" id="mOk">Done</button></div>`);
+    const b2 = modal(`<h3>${tr("Saved", "저장했어요")}</h3><ul>
+      ${counts.embedded ? `<li>${tr(`<b>${counts.embedded.toLocaleString()}</b> JPEGs updated (metadata only)`, `JPEG <b>${counts.embedded.toLocaleString()}</b>장 기록 (메타데이터만)`)}</li>` : ""}
+      ${counts.unchanged ? `<li>${tr(`${counts.unchanged.toLocaleString()} JPEGs already up to date`, `JPEG ${counts.unchanged.toLocaleString()}장은 이미 최신`)}</li>` : ""}
+      ${counts.created ? `<li>${tr(`<b>${counts.created.toLocaleString()}</b> sidecars created`, `사이드카 <b>${counts.created.toLocaleString()}</b>개 생성`)}</li>` : ""}
+      ${counts.updated ? `<li>${tr(`<b>${counts.updated.toLocaleString()}</b> sidecars updated`, `사이드카 <b>${counts.updated.toLocaleString()}</b>개 갱신`)}</li>` : ""}
+      ${counts.retired ? `<li>${tr(`${counts.retired.toLocaleString()} old Wedding Cull sidecars of JPEGs moved to <code>_cull/xmp_backup/old_sidecars/</code>`, `예전 JPEG 사이드카 ${counts.retired.toLocaleString()}개를 <code>_cull/xmp_backup/old_sidecars/</code>로 옮김`)}</li>` : ""}
+      <li><code>_cull/</code>: results.csv, overrides.csv, ${tr("Photoshop scripts", "Photoshop 스크립트")}</li>
+      ${counts.failed.length ? `<li style="color:var(--reject)">${tr(`<b>${counts.failed.length}</b> failed`, `<b>${counts.failed.length}</b>개 실패`)}: ${counts.failed.slice(0, 5).map(esc).join("; ")}</li>` : ""}</ul>
+      <p class="muted">${S.app === "lightroom" ? tr("Lightroom Classic: select the photos → <b>Metadata → Read Metadata from Files</b>.", "Lightroom Classic: 사진을 고르고 → <b>Metadata → Read Metadata from Files</b>.") : tr(`Bridge: <b>View → Refresh</b>, then Filter by Reject / ★★★ / “${esc(lab)}”.`, `Bridge: <b>View → Refresh</b> 후 Reject / ★★★ / “${esc(lab)}”로 거르세요.`)}</p>
+      <div class="row"><button class="btn" id="mApps">${tr("All steps", "전체 방법")}</button><button class="btn primary" id="mOk">${tr("Done", "완료")}</button></div>`);
     b2.querySelector("#mOk").onclick = closeModal;
     b2.querySelector("#mApps").onclick = () => { closeModal(); S.view = "apps"; render(); };
     window.WCApp.lastSave = counts;
@@ -758,11 +891,13 @@ For JPEGs they read ratings only from inside the file: open Wedding Cull in Chro
 Photoshop: File > Scripts > Browse... > _cull/Open keepers in Photoshop.jsx
 ` });
     download(WC.zip(files), `${S.rootName} - Wedding Cull XMP.zip`);
-    toast("ZIP downloaded: unzip it into the event folder.");
+    toast(tr("ZIP downloaded: unzip it into the event folder.", "ZIP을 받았어요. 행사 폴더에 압축을 푸세요."));
   }
   window.WCApp.render = render;
   window.WCApp.openFileList = openFileList;
   window.WCApp.decide = decide;
+  window.WCApp.setLang = setLang;
+  window.WCApp.setKeep = setKeep;
 
   initStart();
 })();

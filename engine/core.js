@@ -16,7 +16,7 @@
       bright_clip: 0.22, bright_clip_reject: 0.45, face_clip_check: 0.35, face_clip_reject: 0.5,
       face_blown_luma: 238, lowkey_ec: -0.7, highkey_ec: 0.7, blank_std: 7.0, blank_edges: 0.004,
     },
-    bursts: { max_gap_s: 2.5, max_span_s: 20.0, hash_dist: 14, hash_dist_tight: 22, no_time_hash_dist: 10 },
+    bursts: { max_gap_s: 2.5, max_span_s: 20.0, hash_dist: 14, hash_dist_tight: 22, no_time_hash_dist: 10, keep: 1 },
     output: { star_best: 3, star_singles: true, check_label: "Second", keywords: true },
     strictness: { gentle: 0.8, normal: 1.0, strict: 1.25 },
   };
@@ -301,9 +301,15 @@
       const cand = pool.length ? pool : rs;
       let best = cand[0];
       for (const r of cand) if (r.quality > best.quality) best = r; // max(): first of equal maxima wins
+      // keep N best per burst (web setting, 1-5; 1 = the desktop behaviour): the keeper plus the next best
+      const nKeep = Math.max(1, Math.min(5, Math.round((cfg.bursts && cfg.bursts.keep) || 1)));
+      const kept = new Set([best]);
+      if (nKeep > 1) for (const r of cand.filter((x) => x !== best).sort((a, b) => b.quality - a.quality)) {
+        if (kept.size >= nKeep) break; kept.add(r);
+      }
       for (const r of rs) {
         r.burst = i + 1; r.burst_size = rs.length; r.keeper = best.id;
-        r.role = rs.length === 1 ? "single" : (r === best ? "best" : "alternate");
+        r.role = rs.length === 1 ? "single" : (kept.has(r) ? "best" : "alternate");
       }
     });
     for (const r of results.values()) {

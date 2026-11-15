@@ -189,3 +189,12 @@ h1 { font: 600 clamp(32px, 5.4vw, 54px)/1.08 var(--serif); margin: 0 0 18px; let
 .content a { color: var(--accent); }
 .foot { text-align: center; color: var(--muted); font-size: 13px; padding: 0 20px 40px; }
 .foot a { color: var(--accent); }
+
+/* Korean: Hangul has no matching serif in the stack, so headings use the system Korean sans; keep words whole */
+html:lang(ko) { --serif: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; }
+html:lang(ko) body { word-break: keep-all; overflow-wrap: anywhere; }
+html:lang(ko) h1 { letter-spacing: -1px; }
+.lang { font-size: 13px; border: 1px solid var(--line); border-radius: 99px; padding: 3px 10px; margin-right: 10px; }
+.side .details { display: flex; gap: 8px; align-items: center; margin: 18px 8px 4px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.keepctl { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 4px 0 10px; font-size: 14px; color: var(--muted); }
+.keepSeg button { padding: 6px 11px; font-variant-numeric: tabular-nums; }

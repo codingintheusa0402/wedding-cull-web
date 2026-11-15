@@ -11,7 +11,7 @@ Your photos never leave your computer.
 
 ### [**▶ Open Wedding Cull**](https://codingintheusa0402.github.io/wedding-cull-web/)
 
-Mac and Windows · Chrome / Edge (Safari and Firefox: read-only mode) · nothing to install · MIT
+Mac and Windows · Chrome / Edge (Safari and Firefox: read-only mode) · English and 한국어 · nothing to install · MIT
 
 <img src="docs/media/demo.gif" alt="Choosing a wedding folder, 45 photos analysed in about 12 seconds, rejects grouped by reason, bursts with the best frame starred, the full-size view, and saving ratings into the folder" width="100%">
 
@@ -33,13 +33,14 @@ delete or want to double-check, grouped by reason, so the review takes minutes i
 | **Closed eyes** | Faces are found (also small ones in full-length shots) and each main face gets a blink score. Blurry guests in the background are ignored. |
 | **Too dark / too bright** | Histogram, clipped highlights and face brightness. Takes exposure compensation into account, so an intentional low-key or high-key shot is not flagged. |
 | **Accidental frames** | Lens cap, ground, sky and misfires. |
-| **Bursts** | Frames taken seconds apart that look alike are grouped. The best one (sharpest, eyes open, best exposed) gets ★★★ and the rest are marked as alternates. |
+| **Bursts** | Frames taken seconds apart that look alike are grouped. The best one (sharpest, eyes open, best exposed) gets ★★★ and the rest are marked as alternates. Want more than one? Keep the **1 to 5 best** of each burst. |
 
 Then you confirm: <kbd>K</kbd> keep · <kbd>R</kbd> reject · <kbd>C</kbd> check · <kbd>U</kbd> undo, on a card or in the full-size view.
+Each photo says why in plain words ("Camera shake: the picture is smeared"); tick **Show technical details** for the measurements.
 
 <table>
 <tr>
-<td width="50%"><img src="docs/media/04-rejects.jpg" alt="Rejects grouped by reason"><br><sub><b>Rejects, grouped by reason</b>, each with the measurement that triggered it</sub></td>
+<td width="50%"><img src="docs/media/04-rejects.jpg" alt="Rejects grouped by reason"><br><sub><b>Rejects, grouped by reason</b>, each with a plain-language reason (measurements one click away)</sub></td>
 <td width="50%"><img src="docs/media/05-bursts.jpg" alt="Bursts with the best frame starred"><br><sub><b>Bursts</b>: the sharp frame is starred, the blurred and shaken ones are rejected</sub></td>
 </tr>
 <tr>
@@ -50,12 +51,16 @@ Then you confirm: <kbd>K</kbd> keep · <kbd>R</kbd> reject · <kbd>C</kbd> check
 <td><img src="docs/media/03-overview-dark.jpg" alt="Overview in dark mode"><br><sub><b>Overview</b> (dark mode follows your system)</sub></td>
 <td><img src="docs/media/07-apps.jpg" alt="Open in Lightroom, Bridge or Photoshop"><br><sub><b>Open in</b> Lightroom Classic, Bridge or Photoshop</sub></td>
 </tr>
+<tr>
+<td><img src="docs/media/09-korean.jpg" alt="The app in Korean"><br><sub><b>한국어</b>: switch with the button at the top right (follows your browser language)</sub></td>
+<td></td>
+</tr>
 </table>
 
 ## How to use it
 
 1. Open **[Wedding Cull](https://codingintheusa0402.github.io/wedding-cull-web/)** in **Chrome** or **Edge** (Mac or Windows).
-2. Pick **Lightroom Classic** or **Bridge + Photoshop** under *I edit in*, and a strictness (*Normal* is a good start).
+2. Pick **Lightroom Classic** or **Bridge + Photoshop** under *I edit in*, a strictness (*Normal* is a good start) and how many of the best frames to keep per burst (*1* by default). The **한국어 / English** button at the top right switches the language.
 3. Click **Choose event folder** (straight from the SD card is fine) and allow access. JPEG and RAW (ARW, CR3, CR2, NEF, DNG, RAF, ORF, RW2).
 4. Look through **Rejects** and **To check**. Fix any wrong call with K / R / C.
 5. Click **Save to folder**. It shows exactly what it will write and asks first.
